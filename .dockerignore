@@ -1,0 +1,30 @@
+# Dependencies and caches
+node_modules/
+**/node_modules/
+.npm
+.yarn/
+yarn.lock
+
+# Logs
+*.log
+
+# Environment variables
+# .env
+.env.local
+
+# Build artifacts
+dist/
+build/
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+
+Dockerfile*
+keypairs/

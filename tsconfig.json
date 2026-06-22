@@ -1,0 +1,39 @@
+{
+	"compilerOptions": {
+		"lib": [
+			"es2022",
+			"ES2021.String"
+		],
+		"module": "commonjs",
+		"target": "es2022",
+		"types": [
+			"node"
+		],
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"moduleResolution": "node",
+		"rootDir": "./src",
+		"outDir": "dist",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"removeComments": true
+	},
+	"exclude": [
+		"node_modules",
+		"node_modules/**/*",
+		"dist",
+		"src/entities",
+		"src/entities/**/*",
+		"src/server/apis",
+		"src/server/apis/**/*",
+		"src/services",
+		"src/services/**/*",
+		"src/proto",
+		"src/proto/**/*",
+		"src/errors",
+		"src/errors/**/*",
+		"src/handlers/cache.ts"
+	]
+}
