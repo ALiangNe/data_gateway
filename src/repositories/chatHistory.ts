@@ -154,12 +154,14 @@ export const queryChatActiveDates = async (
 /**
  * Query chat histories in time range
  * @param userId user id
+ * @param soulId soul id
  * @param startUtc range start UTC time
  * @param endUtc range end UTC time
  * @returns chat history list
  */
 export const queryChatHistoriesByDate = async (
     userId: string,
+    soulId: string,
     startUtc: string,
     endUtc: string,
 ): Promise<ChatHistory[]> => {
@@ -169,14 +171,15 @@ export const queryChatHistoriesByDate = async (
         SELECT id, role, content, created_at
         FROM ${CHAT_HISTORY_TABLE}
         WHERE user_id = $1
-          AND created_at >= $2
-          AND created_at < $3
+          AND soul_id = $2
+          AND created_at >= $3
+          AND created_at < $4
         ORDER BY created_at ASC, CASE WHEN role = 'user' THEN 0 ELSE 1 END ASC
     `
 
     let res: QueryResult<{ id: string; role: string; content: string; created_at: Date }>
     try {
-        res = await pgClient.query(sql, [userId, startUtc, endUtc])
+        res = await pgClient.query(sql, [userId, soulId, startUtc, endUtc])
     } catch (error) {
         throw parseError(error)
     }

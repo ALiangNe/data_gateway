@@ -284,12 +284,13 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
  * getChatHistoriesByDate middleware.
  */
 export const _getChatHistoriesByDate = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId, date } = req.body
+    const { userId, soulId, date } = req.body
 
     let result: ChatHistory[] = []
     try {
         result = await getChatHistoriesByDate_(
             userId,
+            soulId,
             date,
         )
     } catch (error) {

@@ -396,11 +396,13 @@ export const getChatActiveDates_ = async (
 /**
  * Get chat histories by date handler.
  * @param userId user id
+ * @param soulId soul id
  * @param date local date in YYYY-MM-DD format
  * @returns chat history list for the day
  */
 export const getChatHistoriesByDate_ = async (
     userId: string,
+    soulId: string,
     date: string,
 ): Promise<ChatHistory[]> => {
     const startUtc = new Date(`${date}T00:00:00+08:00`).toISOString()
@@ -411,7 +413,7 @@ export const getChatHistoriesByDate_ = async (
     const endUtc = end.toISOString()
 
     try {
-        return await queryChatHistoriesByDate(userId, startUtc, endUtc)
+        return await queryChatHistoriesByDate(userId, soulId, startUtc, endUtc)
     } catch (error) {
         console.error('get chat histories by date failed:', error)
         throw error
