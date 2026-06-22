@@ -111,19 +111,19 @@ export const queryUserMemories = async (
 }
 
 /**
- * Query memory fields by user id and soul id
+ * Query memory by user id and soul id
  * @param userId user id
  * @param soulId soul id
- * @returns memory list
+ * @returns memory text
  */
-export const queryUserMemoriesByUserId = async (userId: string, soulId: string): Promise<string[]> => {
+export const queryUserMemoriesByUserId = async (userId: string, soulId: string): Promise<string> => {
     if (!pgClient) throw 'POSTGRES_NOT_READY'
 
     const sql = `
         SELECT memory
         FROM ${USER_MEMORY_TABLE}
         WHERE user_id = $1 AND soul_id = $2
-        ORDER BY created_at DESC
+        LIMIT 1
     `
 
     let res: QueryResult<{ memory: string }>
@@ -133,5 +133,5 @@ export const queryUserMemoriesByUserId = async (userId: string, soulId: string):
         throw parseError(error)
     }
 
-    return res.rows.map((row) => row.memory)
+    return res.rows[0]?.memory ?? ''
 }

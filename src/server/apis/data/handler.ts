@@ -352,9 +352,9 @@ export const getUserMemories_ = async (
  * Get user memories by user id handler.
  * @param userId user id
  * @param soulId soul id
- * @returns memory list
+ * @returns memory text
  */
-export const getUserMemoriesByUserId_ = async (userId: string, soulId: string): Promise<string[]> => {
+export const getUserMemoriesByUserId_ = async (userId: string, soulId: string): Promise<string> => {
     try {
         return await queryUserMemoriesByUserId(userId, soulId)
     } catch (error) {

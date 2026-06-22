@@ -251,7 +251,7 @@ export const _getUserMemories = async (req: Request, res: Response, _next: NextF
 export const _getUserMemoriesByUserId = async (req: Request, res: Response, _next: NextFunction) => {
     const { userId, soulId } = req.body
 
-    let result: string[] = []
+    let result = ''
     try {
         result = await getUserMemoriesByUserId_(userId, soulId)
     } catch (error) {
