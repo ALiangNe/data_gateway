@@ -11,6 +11,7 @@ import {
     _getUsers,
     _getUserBehaviorLogs,
     _getUserMemories,
+    _getUserMemoriesByUserId,
     _getChatActiveDates,
     _getChatHistoriesByDate,
 } from './midware'
@@ -28,6 +29,7 @@ router.post('/getMonitorLogs', _getMonitorLogs)
 router.post('/getUsers', _getUsers)
 router.post('/getUserBehaviorLogs', _getUserBehaviorLogs)
 router.post('/getUserMemories', _getUserMemories)
+router.post('/getUserMemoriesByUserId', _getUserMemoriesByUserId)
 router.post('/getChatActiveDates', _getChatActiveDates)
 router.post('/getChatHistoriesByDate', _getChatHistoriesByDate)
 

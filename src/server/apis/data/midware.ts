@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { AuthProvider, Bot, ChatHistory, ChatTopic, DataListResult, Knowledge, McpCapability, Media, MonitorLog, User, UserBehaviorLog, UserMemory } from '../../../type'
-import { getAuthProviders_, getBots_, getChatHistories_, getChatActiveDates_, getChatHistoriesByDate_, getChatTopics_, getKnowledge_, getMcpCapabilities_, getMedia_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemories_ } from './handler'
+import { getAuthProviders_, getBots_, getChatHistories_, getChatActiveDates_, getChatHistoriesByDate_, getChatTopics_, getKnowledge_, getMcpCapabilities_, getMedia_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemories_, getUserMemoriesByUserId_ } from './handler'
 import { errObj } from '../../modules/errs'
 
 /**
@@ -240,6 +240,22 @@ export const _getUserMemories = async (req: Request, res: Response, _next: NextF
         )
     } catch (error) {
         console.error('getUserMemories failed: ', error)
+    }
+
+    res.status(200).json({ ...errObj[200], data: result })
+}
+
+/**
+ * getUserMemoriesByUserId middleware.
+ */
+export const _getUserMemoriesByUserId = async (req: Request, res: Response, _next: NextFunction) => {
+    const { userId, soulId } = req.body
+
+    let result: string[] = []
+    try {
+        result = await getUserMemoriesByUserId_(userId, soulId)
+    } catch (error) {
+        console.error('getUserMemoriesByUserId failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })

@@ -8,7 +8,7 @@ import { queryMedia } from '../../../repositories/media'
 import { queryMonitorLogs } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehavior'
-import { queryUserMemories } from '../../../repositories/userMemory'
+import { queryUserMemories, queryUserMemoriesByUserId } from '../../../repositories/userMemory'
 import type { AuthProvider, Bot, ChatHistory, ChatTopic, DataListResult, Knowledge, McpCapability, Media, MonitorLog, User, UserBehaviorLog, UserMemory } from '../../../type'
 
 /**
@@ -344,6 +344,21 @@ export const getUserMemories_ = async (
         )
     } catch (error) {
         console.error('get user memories failed: ', error)
+        throw error
+    }
+}
+
+/**
+ * Get user memories by user id handler.
+ * @param userId user id
+ * @param soulId soul id
+ * @returns memory list
+ */
+export const getUserMemoriesByUserId_ = async (userId: string, soulId: string): Promise<string[]> => {
+    try {
+        return await queryUserMemoriesByUserId(userId, soulId)
+    } catch (error) {
+        console.error('get user memories by user id failed: ', error)
         throw error
     }
 }
