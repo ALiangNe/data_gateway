@@ -49,24 +49,6 @@ export interface User {
     updatedAt: Date
 }
 
-export interface Media {
-    id: string
-    ownerId: string
-    mimeType: string
-    storageKey: string
-    sizeBytes: number
-    metadata: {
-        width?: number
-        height?: number
-        durationMs?: number
-        [key: string]: unknown
-    }
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DELETED'
-    reason: string | null
-    createdAt: Date
-    updatedAt: Date
-}
-
 export interface UserBehaviorLog {
     deviceId: string
     sessionId: string
@@ -83,17 +65,6 @@ export interface UserBehaviorLog {
     clientIp: string | null
     metadata: Record<string, unknown>
     createdAt: Date
-}
-
-export interface UserMemory {
-    id: string
-    memory: string
-    embedding: number[]
-    userId: string
-    soulId: string
-    metadata: Record<string, unknown>
-    createdAt: Date
-    updatedAt: Date
 }
 
 export interface MonitorLog {
@@ -135,20 +106,6 @@ export interface ChatHistory {
     updatedAt: Date
 }
 
-export interface ChatTopic {
-    id: string
-    summary: string
-    embedding: number[]
-    participants: string[]
-    soulId: string
-    conversationId: string
-    startedAt: Date
-    endedAt: Date
-    metadata: Record<string, unknown>
-    createdAt: Date
-    updatedAt: Date
-}
-
 export interface Knowledge {
     id: string
     document: string
@@ -171,17 +128,6 @@ export interface Bot {
     metadata: Record<string, unknown>
     registeredAt: Date | null
     activatedAt: Date | null
-    createdAt: Date
-    updatedAt: Date
-}
-
-export interface AuthProvider {
-    id: string
-    userId: string
-    provider: string
-    userProviderId: string
-    email: string | null
-    emailVerified: boolean
     createdAt: Date
     updatedAt: Date
 }

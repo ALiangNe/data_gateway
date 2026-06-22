@@ -2,23 +2,10 @@
  * Chat history repository
  */
 import { pgClient, parseError } from '../modules/pg'
-import type { ChatHistory, DataListResult } from '../type'
+import type { ChatHistory } from '../type'
 import type { QueryResult } from 'pg'
 
 const CHAT_HISTORY_TABLE = 'chat_histories'
-
-const CHAT_HISTORY_COLUMN_MAP: Record<string, string> = {
-    id: 'id',
-    role: 'role',
-    content: 'content',
-    userId: 'user_id',
-    soulId: 'soul_id',
-    conversationId: 'conversation_id',
-    topicId: 'topic_id',
-    metadata: 'metadata',
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-}
 
 const toChatHistory = (row: Record<string, unknown>): ChatHistory => {
     return {
@@ -32,89 +19,6 @@ const toChatHistory = (row: Record<string, unknown>): ChatHistory => {
         metadata: row.metadata as ChatHistory['metadata'],
         createdAt: row.created_at as Date,
         updatedAt: row.updated_at as Date,
-    }
-}
-
-/**
- * Query chat histories with pagination and ordering
- * @param filters filter criteria
- * @param page page number
- * @param pageSize items per page
- * @param sortBy sort field
- * @param order sort direction
- * @returns chat history list and total count
- */
-export const queryChatHistories = async (
-    filters: Record<string, unknown> = {},
-    page: number = 1,
-    pageSize: number = 20,
-    sortBy: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
-): Promise<DataListResult<ChatHistory>> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
-
-    if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-    if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
-    if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
-
-    const values: unknown[] = []
-    const conditions: string[] = []
-
-    for (const [key, value] of Object.entries(filters)) {
-        if (value === undefined) continue
-
-        const col = CHAT_HISTORY_COLUMN_MAP[key]
-        if (!col) throw 'INVALID_QUERY_KEYS'
-
-        if (!Array.isArray(value)) {
-            conditions.push(`${col} = $${values.length + 1}`)
-            values.push(value)
-            continue
-        }
-
-        const [start, end] = value as [unknown?, unknown?]
-        if (start != null && start !== '') {
-            conditions.push(`${col} >= $${values.length + 1}`)
-            values.push(start)
-        }
-        if (end != null && end !== '') {
-            conditions.push(`${col} <= $${values.length + 1}`)
-            values.push(end)
-        }
-    }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
-    const orderCol = CHAT_HISTORY_COLUMN_MAP[sortBy]
-    if (!orderCol) throw 'INVALID_SORT_BY'
-
-    const countSql = `SELECT COUNT(*)::int AS total FROM ${CHAT_HISTORY_TABLE} ${whereClause}`
-
-    values.push(pageSize, (page - 1) * pageSize)
-    const sql = `
-        SELECT * FROM (
-            SELECT * FROM ${CHAT_HISTORY_TABLE}
-            ${whereClause}
-            ORDER BY ${orderCol} ${order === 'asc' ? 'ASC' : 'DESC'}
-            LIMIT $${values.length - 1} OFFSET $${values.length}
-        ) t
-        ORDER BY ${orderCol} ${order === 'asc' ? 'ASC' : 'DESC'}${orderCol === 'created_at' ? ', CASE WHEN role = \'user\' THEN 0 ELSE 1 END ASC' : ''}
-    `
-
-    let countRes: QueryResult<{ total: number }>
-    let res: QueryResult<Record<string, unknown>>
-    try {
-        [countRes, res] = await Promise.all([
-            pgClient.query(countSql, values.slice(0, values.length - 2)),
-            pgClient.query(sql, values),
-        ])
-    } catch (error) {
-        throw parseError(error)
-    }
-
-    return {
-        list: res.rows.map((row) => toChatHistory(row)),
-        total: countRes.rows[0]?.total as number,
     }
 }
 

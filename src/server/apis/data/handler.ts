@@ -1,45 +1,12 @@
-import { queryAuthProviders } from '../../../repositories/authProvider'
 import { queryBots } from '../../../repositories/bot'
-import { queryChatHistories, queryChatActiveDates, queryChatHistoriesByDate } from '../../../repositories/chatHistory'
-import { queryChatTopics } from '../../../repositories/chatTopic'
+import { queryChatActiveDates, queryChatHistoriesByDate } from '../../../repositories/chatHistory'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
-import { queryMedia } from '../../../repositories/media'
 import { queryMonitorLogs } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehavior'
-import { queryUserMemories, queryUserMemoriesByUserId } from '../../../repositories/userMemory'
-import type { AuthProvider, Bot, ChatHistory, ChatTopic, DataListResult, Knowledge, McpCapability, Media, MonitorLog, User, UserBehaviorLog, UserMemory } from '../../../type'
-
-/**
- * Get auth providers handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated auth provider list
- */
-export const getAuthProviders_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<AuthProvider>> => {
-    try {
-        return await queryAuthProviders(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get auth providers failed: ', error)
-        throw error
-    }
-}
+import { queryUserMemoriesByUserId } from '../../../repositories/userMemory'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLog } from '../../../type'
 
 /**
  * Get bots handler.
@@ -67,66 +34,6 @@ export const getBots_ = async (
         )
     } catch (error) {
         console.error('get bots failed: ', error)
-        throw error
-    }
-}
-
-/**
- * Get chat histories handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated chat history list
- */
-export const getChatHistories_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<ChatHistory>> => {
-    try {
-        return await queryChatHistories(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get chat histories failed: ', error)
-        throw error
-    }
-}
-
-/**
- * Get chat topics handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated chat topic list
- */
-export const getChatTopics_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<ChatTopic>> => {
-    try {
-        return await queryChatTopics(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get chat topics failed: ', error)
         throw error
     }
 }
@@ -187,36 +94,6 @@ export const getMcpCapabilities_ = async (
         )
     } catch (error) {
         console.error('get MCP capabilities failed: ', error)
-        throw error
-    }
-}
-
-/**
- * Get media handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated media list
- */
-export const getMedia_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<Media>> => {
-    try {
-        return await queryMedia(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get media failed: ', error)
         throw error
     }
 }
@@ -314,36 +191,6 @@ export const getUserBehaviorLogs_ = async (
         )
     } catch (error) {
         console.error('get user behavior logs failed: ', error)
-        throw error
-    }
-}
-
-/**
- * Get user memories handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated user memory list
- */
-export const getUserMemories_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<UserMemory>> => {
-    try {
-        return await queryUserMemories(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get user memories failed: ', error)
         throw error
     }
 }
