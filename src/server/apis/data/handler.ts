@@ -4,9 +4,9 @@ import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
 import { queryMonitorLogs } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
-import { queryUserBehaviorSessions, type UserBehaviorSessionAggregate } from '../../../repositories/userBehavior'
+import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLogAggregate } from '../../../type'
 
 /**
  * Get bots handler.
@@ -171,16 +171,16 @@ export const getUsers_ = async (
  * @param page - Page number
  * @param pageSize - Items per page
  * @param order - Sort direction
- * @returns paginated aggregated session list
+ * @returns paginated aggregated user behavior log list
  */
 export const getUserBehaviorLogs_ = async (
     createdAt: [string?, string?] | undefined,
     page: number,
     pageSize: number,
     order: 'asc' | 'desc',
-): Promise<DataListResult<UserBehaviorSessionAggregate>> => {
+): Promise<DataListResult<UserBehaviorLogAggregate>> => {
     try {
-        return await queryUserBehaviorSessions(
+        return await queryUserBehaviorLogs(
             createdAt,
             page,
             pageSize,

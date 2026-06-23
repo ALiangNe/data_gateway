@@ -36,6 +36,66 @@ export type ReadinessResult = {
 }
 
 // Data API entities
+export interface Bot {
+    id: string
+    ownerId: string
+    platform: string
+    status: string
+    metadata: Record<string, unknown>
+    registeredAt: Date | null
+    activatedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface ChatHistory {
+    id: string
+    role: string
+    content: string
+    userId: string
+    soulId: string
+    conversationId: string
+    topicId: string | null
+    metadata: Record<string, unknown>
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface Knowledge {
+    id: string
+    document: string
+    embedding: number[]
+    metadata: Record<string, unknown>
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface McpCapability {
+    id: string
+    document: string
+    embedding: number[]
+    metadata: Record<string, unknown>
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface MonitorLog {
+    service: string
+    env: string
+    instanceId: number
+    traceId: string
+    spanId: string
+    parentSpanId: string | null
+    name: string
+    startTimeMs: number
+    durationMs: number
+    status: string
+    botId: string | null
+    soulId: string | null
+    meta: Record<string, unknown>
+    error: Record<string, unknown> | null
+}
+
 export interface User {
     id: string
     username: string
@@ -67,67 +127,30 @@ export interface UserBehaviorLog {
     createdAt: Date
 }
 
-export interface MonitorLog {
-    service: string
-    env: string
-    instanceId: number
-    traceId: string
-    spanId: string
-    parentSpanId: string | null
-    name: string
-    startTimeMs: number
-    durationMs: number
-    status: string
-    botId: string | null
-    soulId: string | null
-    meta: Record<string, unknown>
-    error: Record<string, unknown> | null
+export interface UserBehaviorValueCount {
+    value: string
+    count: number
 }
 
-export interface McpCapability {
-    id: string
-    document: string
-    embedding: number[]
-    metadata: Record<string, unknown>
+export interface UserBehaviorLogAggregate {
+    sessionId: string
+    deviceId: string
+    userIds: UserBehaviorValueCount[]
+    platforms: UserBehaviorValueCount[]
+    userAgents: UserBehaviorValueCount[]
+    screenSizes: UserBehaviorValueCount[]
+    languages: UserBehaviorValueCount[]
+    timezones: UserBehaviorValueCount[]
+    referrers: UserBehaviorValueCount[]
+    utmSources: UserBehaviorValueCount[]
+    eventTypes: UserBehaviorValueCount[]
+    eventNames: UserBehaviorValueCount[]
+    clientIps: UserBehaviorValueCount[]
     createdAt: Date
-    updatedAt: Date
 }
 
-export interface ChatHistory {
-    id: string
-    role: string
-    content: string
-    userId: string
-    soulId: string
-    conversationId: string
-    topicId: string | null
-    metadata: Record<string, unknown>
-    createdAt: Date
-    updatedAt: Date
-}
-
-export interface Knowledge {
-    id: string
-    document: string
-    embedding: number[]
-    metadata: Record<string, unknown>
-    createdAt: Date
-    updatedAt: Date
-}
-
+// Data list result
 export type DataListResult<T> = {
     list: T[]
     total: number
-}
-
-export interface Bot {
-    id: string
-    ownerId: string
-    platform: string
-    status: string
-    metadata: Record<string, unknown>
-    registeredAt: Date | null
-    activatedAt: Date | null
-    createdAt: Date
-    updatedAt: Date
 }

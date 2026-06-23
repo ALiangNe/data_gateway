@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User } from '../../../type'
 import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
-import type { UserBehaviorSessionAggregate } from '../../../repositories/userBehavior'
+import type { UserBehaviorLogAggregate } from '../../../type'
 import { errObj } from '../../modules/errs'
 
 /**
@@ -120,7 +120,7 @@ export const _getUsers = async (req: Request, res: Response, _next: NextFunction
 export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: NextFunction) => {
     const { page, pageSize, order, createdAt } = req.body
 
-    let result: DataListResult<UserBehaviorSessionAggregate> = { list: [], total: 0 }
+    let result: DataListResult<UserBehaviorLogAggregate> = { list: [], total: 0 }
     try {
         result = await getUserBehaviorLogs_(
             createdAt,
