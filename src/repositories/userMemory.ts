@@ -12,7 +12,7 @@ const USER_MEMORY_TABLE = 'user_memories'
  * @param soulId soul id
  * @returns memory text
  */
-export const queryUserMemoriesByUserId = async (userId: string, soulId: string): Promise<string> => {
+export const queryUserMemory = async (userId: string, soulId: string): Promise<string> => {
     if (!pgClient) throw 'POSTGRES_NOT_READY'
 
     const sql = `

@@ -6,9 +6,9 @@ import {
     _getMonitorLogs,
     _getUsers,
     _getUserBehaviorLogs,
-    _getUserMemoriesByUserId,
+    _getUserMemory,
     _getChatActiveDates,
-    _getChatHistoriesByDate,
+    _getChatHistories,
 } from './midware'
 
 const router = Router()
@@ -19,8 +19,8 @@ router.post('/getMcpCapabilities', _getMcpCapabilities)
 router.post('/getMonitorLogs', _getMonitorLogs)
 router.post('/getUsers', _getUsers)
 router.post('/getUserBehaviorLogs', _getUserBehaviorLogs)
-router.post('/getUserMemoriesByUserId', _getUserMemoriesByUserId)
+router.post('/getUserMemory', _getUserMemory)
 router.post('/getChatActiveDates', _getChatActiveDates)
-router.post('/getChatHistoriesByDate', _getChatHistoriesByDate)
+router.post('/getChatHistories', _getChatHistories)
 
 export default router

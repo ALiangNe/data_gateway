@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLog } from '../../../type'
-import { getBots_, getChatActiveDates_, getChatHistoriesByDate_, getKnowledge_, getMcpCapabilities_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemoriesByUserId_ } from './handler'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User } from '../../../type'
+import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
+import type { UserBehaviorSessionAggregate } from '../../../repositories/userBehavior'
 import { errObj } from '../../modules/errs'
 
 /**
@@ -117,15 +118,14 @@ export const _getUsers = async (req: Request, res: Response, _next: NextFunction
  * getUserBehaviorLogs middleware.
  */
 export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+    const { page, pageSize, order, createdAt } = req.body
 
-    let result: DataListResult<UserBehaviorLog> = { list: [], total: 0 }
+    let result: DataListResult<UserBehaviorSessionAggregate> = { list: [], total: 0 }
     try {
         result = await getUserBehaviorLogs_(
-            filters,
+            createdAt,
             page,
             pageSize,
-            sortBy,
             order,
         )
     } catch (error) {
@@ -136,16 +136,16 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
 }
 
 /**
- * getUserMemoriesByUserId middleware.
+ * getUserMemory middleware.
  */
-export const _getUserMemoriesByUserId = async (req: Request, res: Response, _next: NextFunction) => {
+export const _getUserMemory = async (req: Request, res: Response, _next: NextFunction) => {
     const { userId, soulId } = req.body
 
     let result = ''
     try {
-        result = await getUserMemoriesByUserId_(userId, soulId)
+        result = await getUserMemory_(userId, soulId)
     } catch (error) {
-        console.error('getUserMemoriesByUserId failed: ', error)
+        console.error('getUserMemory failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -171,20 +171,20 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
 }
 
 /**
- * getChatHistoriesByDate middleware.
+ * getChatHistories middleware.
  */
-export const _getChatHistoriesByDate = async (req: Request, res: Response, _next: NextFunction) => {
+export const _getChatHistories = async (req: Request, res: Response, _next: NextFunction) => {
     const { userId, soulId, date } = req.body
 
     let result: ChatHistory[] = []
     try {
-        result = await getChatHistoriesByDate_(
+        result = await getChatHistories_(
             userId,
             soulId,
             date,
         )
     } catch (error) {
-        console.error('getChatHistoriesByDate failed: ', error)
+        console.error('getChatHistories failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })

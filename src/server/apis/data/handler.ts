@@ -1,12 +1,12 @@
 import { queryBots } from '../../../repositories/bot'
-import { queryChatActiveDates, queryChatHistoriesByDate } from '../../../repositories/chatHistory'
+import { queryChatActiveDates, queryChatHistories } from '../../../repositories/chatHistory'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
 import { queryMonitorLogs } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
-import { queryUserBehaviorLogs } from '../../../repositories/userBehavior'
-import { queryUserMemoriesByUserId } from '../../../repositories/userMemory'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLog } from '../../../type'
+import { queryUserBehaviorSessions, type UserBehaviorSessionAggregate } from '../../../repositories/userBehavior'
+import { queryUserMemory } from '../../../repositories/userMemory'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User } from '../../../type'
 
 /**
  * Get bots handler.
@@ -167,26 +167,23 @@ export const getUsers_ = async (
 
 /**
  * Get user behavior logs handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated user behavior log list
+ * @param createdAt - createdAt range filter
+ * @param page - Page number
+ * @param pageSize - Items per page
+ * @param order - Sort direction
+ * @returns paginated aggregated session list
  */
 export const getUserBehaviorLogs_ = async (
-    filters: Record<string, unknown>,
+    createdAt: [string?, string?] | undefined,
     page: number,
     pageSize: number,
-    sortBy: string | undefined,
     order: 'asc' | 'desc',
-): Promise<DataListResult<UserBehaviorLog>> => {
+): Promise<DataListResult<UserBehaviorSessionAggregate>> => {
     try {
-        return await queryUserBehaviorLogs(
-            filters,
+        return await queryUserBehaviorSessions(
+            createdAt,
             page,
             pageSize,
-            sortBy,
             order,
         )
     } catch (error) {
@@ -196,16 +193,16 @@ export const getUserBehaviorLogs_ = async (
 }
 
 /**
- * Get user memories by user id handler.
+ * Get user memory handler.
  * @param userId user id
  * @param soulId soul id
  * @returns memory text
  */
-export const getUserMemoriesByUserId_ = async (userId: string, soulId: string): Promise<string> => {
+export const getUserMemory_ = async (userId: string, soulId: string): Promise<string> => {
     try {
-        return await queryUserMemoriesByUserId(userId, soulId)
+        return await queryUserMemory(userId, soulId)
     } catch (error) {
-        console.error('get user memories by user id failed: ', error)
+        console.error('get user memory failed: ', error)
         throw error
     }
 }
@@ -241,13 +238,13 @@ export const getChatActiveDates_ = async (
 }
 
 /**
- * Get chat histories by date handler.
+ * Get chat histories handler.
  * @param userId user id
  * @param soulId soul id
  * @param date local date in YYYY-MM-DD format
  * @returns chat history list for the day
  */
-export const getChatHistoriesByDate_ = async (
+export const getChatHistories_ = async (
     userId: string,
     soulId: string,
     date: string,
@@ -260,9 +257,9 @@ export const getChatHistoriesByDate_ = async (
     const endUtc = end.toISOString()
 
     try {
-        return await queryChatHistoriesByDate(userId, soulId, startUtc, endUtc)
+        return await queryChatHistories(userId, soulId, startUtc, endUtc)
     } catch (error) {
-        console.error('get chat histories by date failed:', error)
+        console.error('get chat histories failed:', error)
         throw error
     }
 }

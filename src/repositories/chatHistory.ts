@@ -63,7 +63,7 @@ export const queryChatActiveDates = async (
  * @param endUtc range end UTC time
  * @returns chat history list
  */
-export const queryChatHistoriesByDate = async (
+export const queryChatHistories = async (
     userId: string,
     soulId: string,
     startUtc: string,
