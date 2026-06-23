@@ -2,7 +2,11 @@
  * User behavior log repository
  */
 import { pgClient, parseError } from '../modules/pg'
-import type { DataListResult, UserBehaviorLogAggregate, UserBehaviorValueCount } from '../type'
+import type {
+    DataListResult,
+    UserBehaviorLogAggregate,
+    UserBehaviorValueCount,
+} from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_BEHAVIOR_LOG_TABLE = 'user_behavior_logs'
@@ -22,40 +26,47 @@ const toUserBehaviorLogAggregate = (row: Record<string, unknown>): UserBehaviorL
         eventTypes: row.eventTypes as UserBehaviorValueCount[],
         eventNames: row.eventNames as UserBehaviorValueCount[],
         clientIps: row.clientIps as UserBehaviorValueCount[],
-        createdAt: row.created_at as Date,
+        createdAt: row.createdAt as Date,
     }
 }
 
-const buildAggregateJoin = (
+const buildAggregateCte = (
+    cteName: string,
     column: string,
-    alias: string,
 ): string => `
-    LEFT JOIN LATERAL (
-        SELECT
-            COALESCE(
-                jsonb_agg(
-                    jsonb_build_object(
-                        'value', value,
-                        'count', cnt
-                    )
-                    ORDER BY cnt DESC
-                ),
-                '[]'::jsonb
-            ) AS "${alias}"
-        FROM (
+        ${cteName} AS (
             SELECT
-                ${column} AS value,
-                COUNT(*)::int AS cnt
-            FROM ${USER_BEHAVIOR_LOG_TABLE}
-            WHERE
-                session_id = g.session_id
-                AND device_id = g.device_id
-                AND ${column} IS NOT NULL
-                AND ${column} <> ''
-            GROUP BY ${column}
-        ) grouped
-    ) ${alias} ON TRUE
-`
+                session_id,
+                device_id,
+                COALESCE(
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'value', value,
+                            'count', cnt
+                        )
+                        ORDER BY cnt DESC
+                    ),
+                    '[]'::jsonb
+                ) AS "${cteName}"
+            FROM (
+                SELECT
+                    session_id,
+                    device_id,
+                    ${column} AS value,
+                    COUNT(*)::int AS cnt
+                FROM filtered_logs
+                WHERE
+                    ${column} IS NOT NULL
+                    AND ${column} <> ''
+                GROUP BY
+                    session_id,
+                    device_id,
+                    ${column}
+            ) grouped
+            GROUP BY
+                session_id,
+                device_id
+        )`
 
 /**
  * Query user behavior logs aggregated by sessionId + deviceId
@@ -84,16 +95,12 @@ export const queryUserBehaviorLogs = async (
         const [start, end] = createdAt
 
         if (start != null && start !== '') {
-            conditions.push(
-                `created_at >= $${values.length + 1}`,
-            )
+            conditions.push(`created_at >= $${values.length + 1}`)
             values.push(start)
         }
 
         if (end != null && end !== '') {
-            conditions.push(
-                `created_at <= $${values.length + 1}`,
-            )
+            conditions.push(`created_at <= $${values.length + 1}`)
             values.push(end)
         }
     }
@@ -116,14 +123,13 @@ export const queryUserBehaviorLogs = async (
         ) grouped
     `
 
-    const orderSql = order === 'asc'
-        ? 'ASC'
-        : 'DESC'
+    const orderSql = order === 'asc' ? 'ASC' : 'DESC'
 
     values.push(pageSize, (page - 1) * pageSize)
 
     const listSql = `
-        WITH log_group_page AS (
+        WITH
+        log_group_page AS (
             SELECT
                 session_id,
                 device_id,
@@ -135,38 +141,82 @@ export const queryUserBehaviorLogs = async (
                 device_id
             ORDER BY
                 MAX(created_at) ${orderSql}
-            LIMIT $${values.length - 1} OFFSET $${values.length}
-        )
+            LIMIT $${values.length - 1}
+            OFFSET $${values.length}
+        ),
+        filtered_logs AS (
+            SELECT
+                l.*
+            FROM ${USER_BEHAVIOR_LOG_TABLE} l
+            INNER JOIN log_group_page g
+                ON g.session_id = l.session_id
+                AND g.device_id = l.device_id
+        ),
+        ${buildAggregateCte('user_ids', 'user_id')},
+        ${buildAggregateCte('platforms', 'platform')},
+        ${buildAggregateCte('user_agents', 'user_agent')},
+        ${buildAggregateCte('screen_sizes', 'screen_size')},
+        ${buildAggregateCte('languages', 'language')},
+        ${buildAggregateCte('timezones', 'timezone')},
+        ${buildAggregateCte('referrers', 'referrer')},
+        ${buildAggregateCte('utm_sources', 'utm_source')},
+        ${buildAggregateCte('event_types', 'event_type')},
+        ${buildAggregateCte('event_names', 'event_name')},
+        ${buildAggregateCte('client_ips', 'client_ip')}
+        
         SELECT
             g.session_id AS "sessionId",
             g.device_id AS "deviceId",
-            userIds."userIds" AS "userIds",
-            platforms."platforms" AS "platforms",
-            userAgents."userAgents" AS "userAgents",
-            screenSizes."screenSizes" AS "screenSizes",
-            languages."languages" AS "languages",
-            timezones."timezones" AS "timezones",
-            referrers."referrers" AS "referrers",
-            utmSources."utmSources" AS "utmSources",
-            eventTypes."eventTypes" AS "eventTypes",
-            eventNames."eventNames" AS "eventNames",
-            clientIps."clientIps" AS "clientIps",
+            COALESCE(user_ids.user_ids, '[]'::jsonb) AS "userIds",
+            COALESCE(platforms.platforms, '[]'::jsonb) AS "platforms",
+            COALESCE(user_agents.user_agents, '[]'::jsonb) AS "userAgents",
+            COALESCE(screen_sizes.screen_sizes, '[]'::jsonb) AS "screenSizes",
+            COALESCE(languages.languages, '[]'::jsonb) AS "languages",
+            COALESCE(timezones.timezones, '[]'::jsonb) AS "timezones",
+            COALESCE(referrers.referrers, '[]'::jsonb) AS "referrers",
+            COALESCE(utm_sources.utm_sources, '[]'::jsonb) AS "utmSources",
+            COALESCE(event_types.event_types, '[]'::jsonb) AS "eventTypes",
+            COALESCE(event_names.event_names, '[]'::jsonb) AS "eventNames",
+            COALESCE(client_ips.client_ips, '[]'::jsonb) AS "clientIps",
             g.created_at AS "createdAt"
         FROM log_group_page g
-        ${buildAggregateJoin('user_id', 'userIds')}
-        ${buildAggregateJoin('platform', 'platforms')}
-        ${buildAggregateJoin('user_agent', 'userAgents')}
-        ${buildAggregateJoin('screen_size', 'screenSizes')}
-        ${buildAggregateJoin('language', 'languages')}
-        ${buildAggregateJoin('timezone', 'timezones')}
-        ${buildAggregateJoin('referrer', 'referrers')}
-        ${buildAggregateJoin('utm_source', 'utmSources')}
-        ${buildAggregateJoin('event_type', 'eventTypes')}
-        ${buildAggregateJoin('event_name', 'eventNames')}
-        ${buildAggregateJoin('client_ip', 'clientIps')}
+        LEFT JOIN user_ids
+            ON user_ids.session_id = g.session_id
+            AND user_ids.device_id = g.device_id
+        LEFT JOIN platforms
+            ON platforms.session_id = g.session_id
+            AND platforms.device_id = g.device_id
+        LEFT JOIN user_agents
+            ON user_agents.session_id = g.session_id
+            AND user_agents.device_id = g.device_id
+        LEFT JOIN screen_sizes
+            ON screen_sizes.session_id = g.session_id
+            AND screen_sizes.device_id = g.device_id
+        LEFT JOIN languages
+            ON languages.session_id = g.session_id
+            AND languages.device_id = g.device_id
+        LEFT JOIN timezones
+            ON timezones.session_id = g.session_id
+            AND timezones.device_id = g.device_id
+        LEFT JOIN referrers
+            ON referrers.session_id = g.session_id
+            AND referrers.device_id = g.device_id
+        LEFT JOIN utm_sources
+            ON utm_sources.session_id = g.session_id
+            AND utm_sources.device_id = g.device_id
+        LEFT JOIN event_types
+            ON event_types.session_id = g.session_id
+            AND event_types.device_id = g.device_id
+        LEFT JOIN event_names
+            ON event_names.session_id = g.session_id
+            AND event_names.device_id = g.device_id
+        LEFT JOIN client_ips
+            ON client_ips.session_id = g.session_id
+            AND client_ips.device_id = g.device_id
         ORDER BY
             g.created_at ${orderSql}
     `
+
     let countRes: QueryResult<{ total: number }>
     let listRes: QueryResult<Record<string, unknown>>
 
@@ -180,7 +230,7 @@ export const queryUserBehaviorLogs = async (
     }
 
     return {
-        list: listRes.rows.map((row) => toUserBehaviorLogAggregate(row)),
-        total: countRes.rows[0]?.total as number,
+        list: listRes.rows.map(toUserBehaviorLogAggregate),
+        total: countRes.rows[0]?.total ?? 0,
     }
 }
