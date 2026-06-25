@@ -26,6 +26,9 @@ const MONITOR_LOG_COLUMN_MAP: Record<string, string> = {
 
 const toMonitorLog = (row: Record<string, unknown>): MonitorLog => {
     return {
+        startTimeMs: row.start_ms as number,
+        botId: row.bot_id as string | null,
+        soulId: row.soul_id as string | null,
         service: row.service as string,
         env: row.env as string,
         instanceId: row.instance_id as number,
@@ -33,13 +36,10 @@ const toMonitorLog = (row: Record<string, unknown>): MonitorLog => {
         spanId: row.span_id as string,
         parentSpanId: row.parent_span_id as string | null,
         name: row.name as string,
-        startTimeMs: row.start_ms as number,
-        durationMs: row.duration_ms as number,
         status: row.status as string,
-        botId: row.bot_id as string | null,
-        soulId: row.soul_id as string | null,
-        meta: row.meta as MonitorLog['meta'],
+        durationMs: row.duration_ms as number,
         error: row.error as MonitorLog['error'],
+        meta: row.meta as MonitorLog['meta'],
     }
 }
 
