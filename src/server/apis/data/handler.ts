@@ -6,7 +6,8 @@ import { queryMonitorLogs } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLogAggregate } from '../../../type'
+import { getLocationByIp } from '../../../services/maxmind'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
 
 /**
  * Get bots handler.
@@ -174,13 +175,19 @@ export const getUsers_ = async (
  * @returns paginated aggregated user behavior log list
  */
 export const getUserBehaviorLogs_ = async (
+    aggregateBy: UserBehaviorLogAggregateBy,
+    userId: string = '',
     createdAt: [string?, string?] | undefined,
     page: number,
     pageSize: number,
     order: 'asc' | 'desc',
 ): Promise<DataListResult<UserBehaviorLogAggregate>> => {
+    let result: DataListResult<UserBehaviorLogAggregate>
+
     try {
-        return await queryUserBehaviorLogs(
+        result = await queryUserBehaviorLogs(
+            aggregateBy,
+            userId,
             createdAt,
             page,
             pageSize,
@@ -189,6 +196,63 @@ export const getUserBehaviorLogs_ = async (
     } catch (error) {
         console.error('get user behavior logs failed: ', error)
         throw error
+    }
+
+    const ipSet = new Set<string>()
+
+    for (const row of result.list) {
+        for (const item of row.clientIps) {
+            ipSet.add(item.value)
+        }
+    }
+
+    const locationCache = new Map<string, string>()
+
+    for (const ip of ipSet) {
+        let label = ip
+
+        const { city, region, country } = getLocationByIp(ip)
+        const parts: string[] = []
+
+        if (country) {
+            parts.push(country)
+        }
+
+        if (region) {
+            parts.push(region)
+        }
+
+        if (city) {
+            parts.push(city)
+        }
+
+        if (parts.length > 0) {
+            label = parts.join(', ')
+        }
+
+        locationCache.set(ip, label)
+    }
+
+    const list: UserBehaviorLogAggregate[] = []
+
+    for (const row of result.list) {
+        const clientIps = []
+
+        for (const item of row.clientIps) {
+            clientIps.push({
+                value: locationCache.get(item.value)!,
+            })
+        }
+
+        list.push({
+            ...row,
+            clientIps,
+        })
+    }
+
+    return {
+        list,
+        total: result.total,
     }
 }
 

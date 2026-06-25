@@ -28,8 +28,6 @@
 		"src/entities/**/*",
 		"src/server/apis",
 		"src/server/apis/**/*",
-		"src/services",
-		"src/services/**/*",
 		"src/proto",
 		"src/proto/**/*",
 		"src/errors",

@@ -127,26 +127,65 @@ export interface UserBehaviorLog {
     createdAt: Date
 }
 
+export interface UserBehaviorValue {
+    value: string
+}
+
 export interface UserBehaviorValueCount {
     value: string
     count: number
 }
 
-export interface UserBehaviorLogAggregate {
-    sessionId: string
-    deviceId: string
-    userIds: UserBehaviorValueCount[]
-    platforms: UserBehaviorValueCount[]
-    userAgents: UserBehaviorValueCount[]
-    screenSizes: UserBehaviorValueCount[]
-    languages: UserBehaviorValueCount[]
-    timezones: UserBehaviorValueCount[]
-    referrers: UserBehaviorValueCount[]
-    utmSources: UserBehaviorValueCount[]
+export interface UserBehaviorLogAggregateBase {
+    platforms: UserBehaviorValue[]
+    userAgents: UserBehaviorValue[]
+    screenSizes: UserBehaviorValue[]
+    languages: UserBehaviorValue[]
+    timezones: UserBehaviorValue[]
+    referrers: UserBehaviorValue[]
+    utmSources: UserBehaviorValue[]
+    clientIps: UserBehaviorValue[]
     eventTypes: UserBehaviorValueCount[]
     eventNames: UserBehaviorValueCount[]
-    clientIps: UserBehaviorValueCount[]
     createdAt: Date
+}
+
+export interface UserBehaviorLogSessionAggregate extends UserBehaviorLogAggregateBase {
+    sessionId: string
+    deviceIds: UserBehaviorValue[]
+    userIds: UserBehaviorValue[]
+}
+
+export interface UserBehaviorLogDeviceAggregate extends UserBehaviorLogAggregateBase {
+    deviceId: string
+    sessionIds: UserBehaviorValue[]
+    userIds: UserBehaviorValue[]
+}
+
+export interface UserBehaviorLogUserAggregate extends UserBehaviorLogAggregateBase {
+    userId: string
+    sessionIds: UserBehaviorValue[]
+    deviceIds: UserBehaviorValue[]
+}
+
+export type UserBehaviorLogAggregateBy =
+    | 'session_id'
+    | 'device_id'
+    | 'user_id'
+
+export type UserBehaviorLogAggregate =
+    | UserBehaviorLogSessionAggregate
+    | UserBehaviorLogDeviceAggregate
+    | UserBehaviorLogUserAggregate
+
+export type AggregateConfig = {
+    groupFields: string[]
+    aggregateFields: {
+        key: string
+        column: string
+        withCount?: boolean
+    }[]
+    mapper: (row: Record<string, unknown>) => UserBehaviorLogAggregate
 }
 
 // Data list result

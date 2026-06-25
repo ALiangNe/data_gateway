@@ -10,3 +10,6 @@ keypairs
 deploy*.sh
 certs
 Dockerfile.bkup
+
+# MaxMind GeoIP database
+src/services/*.mmdb

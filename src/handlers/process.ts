@@ -11,6 +11,7 @@ import {
     stopPostgresModules,
     stopRedisModules,
 } from '../init'
+import { initServicesModules, stopServicesModules } from '../services'
 
 /**
  * Custom process event handler: SIG_START
@@ -24,6 +25,7 @@ export const SIGSTART_HANDLER = async (e: string) => {
         await initJwtModules()
         await initRedisModules()
         await initPostgresModules()
+        await initServicesModules()
         initHTTPServer()
         console.log(`-------- ${new Date()} --------\n         ${SERVICE_NAME} initialisation ready!\n         Waiting for HTTP server...\n`)
     } catch (err) {
@@ -45,6 +47,7 @@ export const SIGINTTERM_HANDLER = async (e: unknown) => {
         await stopHTTPServer()
         await stopRedisModules()
         await stopPostgresModules()
+        await stopServicesModules()
     } catch (err) {
         console.log(`The shutdown is not so graceful, ${err}`)
     }

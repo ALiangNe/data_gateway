@@ -118,11 +118,13 @@ export const _getUsers = async (req: Request, res: Response, _next: NextFunction
  * getUserBehaviorLogs middleware.
  */
 export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, order, createdAt } = req.body
+    const { aggregateBy, userId, createdAt, page, pageSize, order } = req.body
 
     let result: DataListResult<UserBehaviorLogAggregate> = { list: [], total: 0 }
     try {
         result = await getUserBehaviorLogs_(
+            aggregateBy,
+            userId,
             createdAt,
             page,
             pageSize,
