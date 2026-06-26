@@ -79,21 +79,34 @@ export interface McpCapability {
     updatedAt: Date
 }
 
-export interface MonitorLog {
-    startTimeMs: number
-    botId: string | null
-    soulId: string | null
+export interface MonitorSpan {
+    spanId: string
+    parentSpanId: string
     service: string
     env: string
-    instanceId: number
-    traceId: string
-    spanId: string
-    parentSpanId: string | null
+    instanceId: string
+    botId?: string
+    soulId?: string
     name: string
     status: string
+    startTimeMs: number
     durationMs: number
-    error: Record<string, unknown> | null
-    meta: Record<string, unknown>
+    error?: string | null
+    meta?: Record<string, unknown>
+}
+
+export interface MonitorTrace {
+    traceId: string
+    startTimeMs: number
+    chain: string[]
+    serviceCount: number
+    durationMs: number
+    status: 'ok' | 'error'
+}
+
+export interface MonitorTraceDetail {
+    traceId: string
+    spans: MonitorSpan[]
 }
 
 export interface User {

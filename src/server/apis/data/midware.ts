@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User } from '../../../type'
-import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogs_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTrace, MonitorTraceDetail, User } from '../../../type'
+import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getMonitorLogsTraces_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
 import type { UserBehaviorLogAggregate } from '../../../type'
 import { errObj } from '../../modules/errs'
 
@@ -71,22 +71,38 @@ export const _getMcpCapabilities = async (req: Request, res: Response, _next: Ne
 }
 
 /**
- * getMonitorLogs middleware.
+ * getMonitorLogsTraces middleware.
  */
-export const _getMonitorLogs = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+export const _getMonitorLogsTraces = async (req: Request, res: Response, _next: NextFunction) => {
+    const { page, pageSize, sortBy, order, ...filters } = req.query
 
-    let result: DataListResult<MonitorLog> = { list: [], total: 0 }
+    let result: DataListResult<MonitorTrace> = { list: [], total: 0 }
     try {
-        result = await getMonitorLogs_(
+        result = await getMonitorLogsTraces_(
             filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
+            Number(page),
+            Number(pageSize),
+            sortBy as string,
+            order as 'asc' | 'desc',
         )
     } catch (error) {
-        console.error('getMonitorLogs failed: ', error)
+        console.error('getMonitorLogsTraces failed: ', error)
+    }
+
+    res.status(200).json({ ...errObj[200], data: result })
+}
+
+/**
+ * getMonitorLogsTrace middleware.
+ */
+export const _getMonitorLogsTrace = async (req: Request, res: Response, _next: NextFunction) => {
+    const { traceId } = req.params
+
+    let result: MonitorTraceDetail | null = null
+    try {
+        result = await getMonitorLogsTrace_(traceId)
+    } catch (error) {
+        console.error('getMonitorLogsTrace failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })

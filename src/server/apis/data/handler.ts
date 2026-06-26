@@ -2,12 +2,12 @@ import { queryBots } from '../../../repositories/bot'
 import { queryChatActiveDates, queryChatHistories } from '../../../repositories/chatHistory'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
-import { queryMonitorLogs } from '../../../repositories/monitorLog'
+import { queryMonitorLogsTrace, queryMonitorLogsTraces } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorLog, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTrace, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
 
 /**
  * Get bots handler.
@@ -100,23 +100,23 @@ export const getMcpCapabilities_ = async (
 }
 
 /**
- * Get monitor logs handler.
+ * Get monitor logs traces handler.
  * @param filters - Filter criteria.
  * @param page - Page number.
  * @param pageSize - Items per page.
  * @param sortBy - Sort field.
  * @param order - Sort direction: asc or desc.
- * @returns paginated monitor log list
+ * @returns paginated monitor trace list
  */
-export const getMonitorLogs_ = async (
+export const getMonitorLogsTraces_ = async (
     filters: Record<string, unknown>,
     page: number,
     pageSize: number,
     sortBy: string | undefined,
     order: 'asc' | 'desc',
-): Promise<DataListResult<MonitorLog>> => {
+): Promise<DataListResult<MonitorTrace>> => {
     try {
-        return await queryMonitorLogs(
+        return await queryMonitorLogsTraces(
             filters,
             page,
             pageSize,
@@ -124,7 +124,21 @@ export const getMonitorLogs_ = async (
             order,
         )
     } catch (error) {
-        console.error('get monitor logs failed: ', error)
+        console.error('get monitor logs traces failed: ', error)
+        throw error
+    }
+}
+
+/**
+ * Get monitor logs trace handler.
+ * @param traceId - trace id
+ * @returns monitor trace detail
+ */
+export const getMonitorLogsTrace_ = async (traceId: string): Promise<MonitorTraceDetail | null> => {
+    try {
+        return await queryMonitorLogsTrace(traceId)
+    } catch (error) {
+        console.error('get monitor logs trace failed: ', error)
         throw error
     }
 }

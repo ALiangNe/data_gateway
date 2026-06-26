@@ -3,7 +3,8 @@ import {
     _getBots,
     _getKnowledge,
     _getMcpCapabilities,
-    _getMonitorLogs,
+    _getMonitorLogsTrace,
+    _getMonitorLogsTraces,
     _getUsers,
     _getUserBehaviorLogs,
     _getUserMemory,
@@ -16,7 +17,8 @@ const router = Router()
 router.post('/getBots', _getBots)
 router.post('/getKnowledge', _getKnowledge)
 router.post('/getMcpCapabilities', _getMcpCapabilities)
-router.post('/getMonitorLogs', _getMonitorLogs)
+router.get('/getMonitorLogs/traces', _getMonitorLogsTraces)
+router.get('/getMonitorLogs/traces/:traceId', _getMonitorLogsTrace)
 router.post('/getUsers', _getUsers)
 router.post('/getUserBehaviorLogs', _getUserBehaviorLogs)
 router.post('/getUserMemory', _getUserMemory)
