@@ -2,12 +2,12 @@ import { queryBots } from '../../../repositories/bot'
 import { queryChatActiveDates, queryChatHistories } from '../../../repositories/chatHistory'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
-import { queryMonitorLogsTrace, queryMonitorLogsTraces } from '../../../repositories/monitorLog'
+import { queryMonitorLogsTrace } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTrace, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
 
 /**
  * Get bots handler.
@@ -95,36 +95,6 @@ export const getMcpCapabilities_ = async (
         )
     } catch (error) {
         console.error('get MCP capabilities failed: ', error)
-        throw error
-    }
-}
-
-/**
- * Get monitor logs traces handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated monitor trace list
- */
-export const getMonitorLogsTraces_ = async (
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<MonitorTrace>> => {
-    try {
-        return await queryMonitorLogsTraces(
-            filters,
-            page,
-            pageSize,
-            sortBy,
-            order,
-        )
-    } catch (error) {
-        console.error('get monitor logs traces failed: ', error)
         throw error
     }
 }

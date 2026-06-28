@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTrace, MonitorTraceDetail, User } from '../../../type'
-import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getMonitorLogsTraces_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
+import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTraceDetail, User } from '../../../type'
+import { getBots_, getChatActiveDates_, getChatHistories_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
 import type { UserBehaviorLogAggregate } from '../../../type'
 import { errObj } from '../../modules/errs'
 
@@ -65,28 +65,6 @@ export const _getMcpCapabilities = async (req: Request, res: Response, _next: Ne
         )
     } catch (error) {
         console.error('getMcpCapabilities failed: ', error)
-    }
-
-    res.status(200).json({ ...errObj[200], data: result })
-}
-
-/**
- * getMonitorLogsTraces middleware.
- */
-export const _getMonitorLogsTraces = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.query
-
-    let result: DataListResult<MonitorTrace> = { list: [], total: 0 }
-    try {
-        result = await getMonitorLogsTraces_(
-            filters,
-            Number(page),
-            Number(pageSize),
-            sortBy as string,
-            order as 'asc' | 'desc',
-        )
-    } catch (error) {
-        console.error('getMonitorLogsTraces failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })
