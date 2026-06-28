@@ -14,14 +14,14 @@ import {
 
 const router = Router()
 
-router.post('/getBots', roleCheck([2, 5]), _getBots)
-router.post('/getKnowledge', roleCheck([2]), _getKnowledge)
-router.post('/getMcpCapabilities', roleCheck([2]), _getMcpCapabilities)
-router.get('/getMonitorLogs/traces/:traceId', roleCheck([2]), _getMonitorLogsTrace)
-router.post('/getUsers', roleCheck([2]), _getUsers)
-router.post('/getUserBehaviorLogs', roleCheck([2]), _getUserBehaviorLogs)
-router.post('/getUserMemory', roleCheck([2]), _getUserMemory)
-router.post('/getChatActiveDates', roleCheck([2]), _getChatActiveDates)
-router.post('/getChatHistories', roleCheck([2]), _getChatHistories)
+router.post('/getBots', roleCheck([1, 5]), _getBots)
+router.post('/getKnowledge', roleCheck([1, 5]), _getKnowledge)
+router.post('/getMcpCapabilities', roleCheck([1, 5]), _getMcpCapabilities)
+router.post('/getMonitorLogsTrace', roleCheck([1, 5]), _getMonitorLogsTrace)
+router.post('/getUsers', roleCheck([1, 5]), _getUsers)
+router.post('/getUserBehaviorLogs', roleCheck([1, 5]), _getUserBehaviorLogs)
+router.post('/getUserMemory', roleCheck([1, 5]), _getUserMemory)
+router.post('/getChatActiveDates', roleCheck([1, 5]), _getChatActiveDates)
+router.post('/getChatHistories', roleCheck([1, 5]), _getChatHistories)
 
 export default router

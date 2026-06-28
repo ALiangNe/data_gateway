@@ -74,7 +74,7 @@ export const _getMcpCapabilities = async (req: Request, res: Response, _next: Ne
  * getMonitorLogsTrace middleware.
  */
 export const _getMonitorLogsTrace = async (req: Request, res: Response, _next: NextFunction) => {
-    const { traceId } = req.params
+    const { traceId } = req.body
 
     let result: MonitorTraceDetail | null = null
     try {
