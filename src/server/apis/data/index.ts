@@ -2,14 +2,15 @@ import { Router } from 'express'
 import { roleCheck } from '../../midwares/permission'
 import {
     _getBots,
+    _getChatActiveDates,
+    _getChatHistories,
+    _getDataLookup,
     _getKnowledge,
     _getMcpCapabilities,
     _getMonitorLogsTrace,
     _getUsers,
     _getUserBehaviorLogs,
     _getUserMemory,
-    _getChatActiveDates,
-    _getChatHistories,
 } from './midware'
 
 const router = Router()
@@ -23,5 +24,6 @@ router.post('/getUserBehaviorLogs', roleCheck([1, 5]), _getUserBehaviorLogs)
 router.post('/getUserMemory', roleCheck([1, 5]), _getUserMemory)
 router.post('/getChatActiveDates', roleCheck([1, 5]), _getChatActiveDates)
 router.post('/getChatHistories', roleCheck([1, 5]), _getChatHistories)
+router.post('/getDataLookup', roleCheck([1, 5]), _getDataLookup)
 
 export default router

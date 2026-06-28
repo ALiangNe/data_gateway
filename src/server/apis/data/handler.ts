@@ -1,5 +1,6 @@
 import { queryBots } from '../../../repositories/bot'
 import { queryChatActiveDates, queryChatHistories } from '../../../repositories/chatHistory'
+import { lookupData } from '../../../repositories/dataLookup'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
 import { queryMonitorLogsTrace } from '../../../repositories/monitorLog'
@@ -7,7 +8,7 @@ import { queryUsers } from '../../../repositories/user'
 import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, DataLookupEntity, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
 
 /**
  * Get bots handler.
@@ -308,6 +309,24 @@ export const getChatHistories_ = async (
         return await queryChatHistories(userId, soulId, startUtc, endUtc)
     } catch (error) {
         console.error('get chat histories failed:', error)
+        throw error
+    }
+}
+
+/**
+ * Get data lookup handler.
+ * @param entity entity name
+ * @param ids record ids
+ * @returns raw database rows
+ */
+export const getDataLookup_ = async (
+    entity: DataLookupEntity,
+    ids: string[],
+): Promise<Record<string, unknown>[]> => {
+    try {
+        return await lookupData(entity, ids)
+    } catch (error) {
+        console.error('get data lookup failed: ', error)
         throw error
     }
 }

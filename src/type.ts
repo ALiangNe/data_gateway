@@ -197,3 +197,16 @@ export type DataListResult<T> = {
     list: T[]
     total: number
 }
+
+export type DataLookupEntity =
+    | 'authProviders'
+    | 'bots'
+    | 'chatHistories'
+    | 'chatTopics'
+    | 'knowledge'
+    | 'mcpCapabilities'
+    | 'media'
+    | 'monitorLogs'
+    | 'users'
+    | 'userBehaviorLogs'
+    | 'userMemories'
