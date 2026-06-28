@@ -1,212 +1,160 @@
-# service_gateway
+# data_gateway
 
-API Gateway between frontends and internal services. Refactored stack with lightweight telemetry (W3C-style trace IDs, no OpenTelemetry SDK dependency).
+HTTP API backend for the **Data Console** (`data_web`). Reads operational data from PostgreSQL and exposes it to authenticated console users.
 
 ## Intro
 
-The gateway exposes **Express HTTP APIs** and a **WebSocket** endpoint for real-time traffic. After validation (JSON, auth, rate limits, IP rules), work is forwarded via **Redis** (Pub/Sub, Lists, Streams), **RabbitMQ**, or direct HTTP to downstream services; responses may return over WebSocket or HTTP depending on the flow.
-
-Clients that rely on push/async flows should follow the API docs and maintain an active WebSocket where required.
+The gateway is a focused Express service: no WebSocket, message queues, or telemetry pipeline. Incoming requests pass through CORS, logging, IP whitelist (non-dev), rate limiting, and JWT verification before reaching data handlers.
 
 **Features**
 
-- WebSocket as a primary channel for interactive flows
-- REST HTTP APIs (`/auth`, `/common`, `/health`, `/slack`, …)
-- Lightweight tracing: `traceId` / `spanId`, AsyncLocalStorage, optional Redis Stream export
-- Redis: cache, Pub/Sub, Lists (task queues), Streams (telemetry pipeline)
-- RabbitMQ for cross-service messaging (optional)
-- PostgreSQL via `pg` pool (optional)
-- JWT, rate limiting, graceful shutdown
-
-**Highlights**
-
-- Multi-instance WebSocket coordination via Redis Pub/Sub
-- Connections keyed by `botId` + `soulId`
-- HTTP: inbound `traceparent` parsed in middleware; responses echo `traceparent`
-- Outbound HTTP (e.g. to `auth_service`): callers should attach `traceparent` from `getCurrentTraceContext()` when telemetry is enabled so downstream HTTP middleware can join the same trace
+- REST APIs under `/data` for bots, users, knowledge, logs, chat history, and raw ID lookup
+- JWT auth via `auth` header (RS256 public key fetched from auth service)
+- Role-based access control on each route (`roleCheck`)
+- PostgreSQL via `pg` pool
+- Redis for HTTP rate limiting
+- MaxMind GeoLite2 for IP geolocation in user behavior logs
 
 ---
 
-## Folder structure
+## Project layout
 
 ```
-├── keys/                 JWT keys (when not loaded from auth service)
-├── public/               Static assets / docs (optional)
-├── src/
-│   ├── app.ts            Process entry
-│   ├── config.ts         Env-driven configuration
-│   ├── init.ts           Init sequence + graceful shutdown hooks
-│   ├── type.ts           Shared TypeScript types (including SpanRecord, telemetry)
-│   ├── errors/           Postgres error mapping, etc.
-│   ├── handlers/
-│   │   ├── process.ts    Signals, uncaught exceptions
-│   │   ├── wrapper.ts    onInvoke() — wraps work in startSpan/endSpan + ALS
-│   │   ├── telemetry/    Span sink helpers (e.g. Redis Stream publish errors)
-│   │   ├── messenger/    Redis Pub/Sub (subscribe, unsubscribe, chat, …)
-│   │   ├── msglist/      Redis List consumers (e.g. chat task replies)
-│   │   ├── socket/       WebSocket upgrade, connection, chat, logout
-│   │   └── stream/       Redis Stream consumers (optional)
-│   ├── modules/
-│   │   ├── telemetry.ts  initTelemetry, startSpan, endSpan, ALS, getCurrentTraceContext
-│   │   ├── cache.ts, messenger.ts, msglist.ts, redisStream.ts
-│   │   ├── mq.ts, pg.ts (node-pg Pool), jwt.ts, socket.ts
-│   │   └── s3.ts         AWS helpers (optional)
-│   ├── repositories/     DB accessors (user, media, …)
-│   ├── services/         Resend, Slack, AWS wrappers
-│   ├── utils/
-│   ├── rabbitmq/         Connection setup + topic handlers
-│   └── server/
-│       ├── index.ts      Express app: middleware order, route mounts
-│       ├── express.d.ts  Request augmentation (e.g. httpTelemetryParent)
-│       ├── apis/
-│       │   ├── auth/      Login, signup, refresh, Google, …
-│       │   ├── common/    Shared utilities
-│       │   ├── health/    Health checks
-│       │   └── slack/     Slack Events API (custom JSON handling on `/slack`)
-│       ├── midwares/
-│       │   ├── trace.ts   httpTraceMiddleware, wrapRoute
-│       │   ├── auth.ts    IP whitelist, JWT helpers, logging
-│       │   └── security.ts Rate limiting (used on `/auth` routes)
-│       └── modules/       errs.ts, limiter.ts, pending.ts
-├── .env / .env.example
+data_gateway/
+├── Dockerfile
+├── .env.example
 ├── package.json
-├── tsconfig.json
-└── README.md
+└── src/
+    ├── app.ts                 Process entry & signals
+    ├── init.ts                Startup / shutdown
+    ├── config.ts              Environment variables
+    ├── type.ts                Shared domain types
+    ├── errors/                Postgres error mapping
+    ├── types/                 Global TS augmentations (e.g. SIGSTART)
+    ├── handlers/              Process lifecycle (SIGSTART, SIGINT, …)
+    ├── modules/               cache · jwt · pg
+    ├── repositories/          SQL layer (bot, user, chat, logs, lookup, …)
+    ├── services/              MaxMind + GeoLite2-City.mmdb
+    └── server/
+        ├── index.ts           Express app & route mounts
+        ├── apis/
+        │   ├── data/          index · midware · handler
+        │   └── health/        index · midware · handlers
+        ├── midwares/          auth · permission · security
+        └── modules/           errs · limiter
 ```
 
-**HTTP route mounts** ([`src/server/index.ts`](src/server/index.ts)): `/` → health, `/slack` → Slack router (global JSON parser is skipped for `/slack` so Slack signatures work), `/common`, `/auth` (with rate limiter middleware).
+**Routes** ([`src/server/index.ts`](src/server/index.ts)):
+
+| Prefix | Middleware | Endpoints |
+|--------|------------|-----------|
+| `/` | — | `GET /health`, `GET /ready` |
+| `/data` | rate limit → JWT | POST data console APIs |
+
+Each API follows **index → midware → handler → repository**.
 
 ---
 
-## Request flow (short)
+## Request flow
 
-**HTTP**
+1. `express.json()` parses the body.
+2. CORS, request logging, IP whitelist (skipped in `dev`).
+3. On `/data`: Redis rate limiter, then JWT verification (`auth` header).
+4. Route handler runs `roleCheck`, then handler logic → repository → PostgreSQL.
+5. Response shape: `{ errno, errmsg, data }` (see [`server/modules/errs.ts`](src/server/modules/errs.ts)).
 
-1. Optional conditional JSON body parser (non-`/slack` routes).
-2. `httpTraceMiddleware`: read inbound `traceparent`, create span, `runInTraceContext`, attach `req.httpTelemetryParent`, set response `traceparent`.
-3. Auth / IP / rate limits as configured.
-4. Route handlers often wrapped with `wrapRoute` (nested span under the HTTP span).
-
-**WebSocket**
-
-1. `startSpan('ws.upgrade')` during HTTP upgrade; validate query params + JWT.
-2. Persist `traceId` and upgrade span id on `(req as WsIncomingMessage).body`.
-3. After successful upgrade: `onInvoke('ws.connect' | 'ws.message' | 'ws.error', …)` shares the same `traceId` with child spans.
-
----
-
-## Telemetry module ([`src/modules/telemetry.ts`](src/modules/telemetry.ts))
-
-**Exports (all used in-repo)**
-
-| Export | Role |
-|--------|------|
-| `initTelemetry` | Registers span sink (`onSpanHandler`), service name, env |
-| `telemetryConfigured` | Guards middleware/handlers when telemetry is off |
-| `runInTraceContext` | Bind `TraceContext` into AsyncLocalStorage |
-| `startSpan` / `endSpan` | Create/close spans and emit `SpanRecord` |
-| `getCurrentTraceContext` | Read ALS context (HTTP handlers, chat, outbound axios headers) |
-
-There is **no** `withSpan` helper; synchronous/async wrapping for Redis/Rabbit handlers uses **`onInvoke`** from [`src/handlers/wrapper.ts`](src/handlers/wrapper.ts).
-
-**`onInvoke` behavior**: If telemetry is disabled **or** `opts.traceAttributes` is missing/empty, the handler runs **without** a span. To force a span for messenger/msglist-style code paths, pass at least one `traceAttributes` entry (e.g. `{ traceAttributes: { botId, soulId }, meta: { … } }`).
-
-**Outbound HTTP**: Inside a traced Express handler, use `getCurrentTraceContext()` (only after `initTelemetry`) and set Axios/fetch header:
-
-`traceparent: 00-${traceId}-${spanId}-${sampled ? '01' : '00'}`
-
-Match flags with [`startSpan`](src/modules/telemetry.ts) (`sampled`). Peer services (for example **auth_service**) should expose the same HTTP trace middleware pattern: parse inbound `traceparent`, create a child span, echo `traceparent` on the response.
-
-**Span payload shape** ([`SpanRecord`](src/type.ts)):
+JWT payload is attached to `req.user`:
 
 ```typescript
-{
-  service: string
-  env?: string
-  instanceId?: number       // process.pid when emitted
-  traceId: string           // 32 hex chars
-  spanId: string            // 16 hex chars
-  parentSpanId?: string
-  name: string
-  startTimeMs: number
-  durationMs: number
-  status: 'ok' | 'error'
-  traceAttributes?: Record<string, string>  // e.g. botId, soulId
-  meta?: Record<string, unknown>
-  error?: { message: string; stack?: string }
-}
+{ userId, botId, soulId, role, jti }
 ```
 
-Optional Redis Stream sink: spans are written via `pushToStream` / monitor streams as configured in init (see existing env docs).
+---
+
+## Data APIs
+
+All routes are **POST** under `/data`. Request bodies are JSON.
+
+| Route | Description |
+|-------|-------------|
+| `/data/getBots` | Paginated bot list with filters and sort |
+| `/data/getKnowledge` | Paginated knowledge entries |
+| `/data/getMcpCapabilities` | Paginated MCP capabilities |
+| `/data/getMonitorLogsTrace` | Monitor trace detail by `traceId` |
+| `/data/getUsers` | Paginated user list |
+| `/data/getUserBehaviorLogs` | Aggregated behavior logs (with IP geolocation) |
+| `/data/getUserMemory` | User memory text by `userId` + `soulId` |
+| `/data/getChatActiveDates` | Active chat dates in a month (`userId`, `currentTime`) |
+| `/data/getChatHistories` | Chat messages for a local date (`userId`, `soulId`, `date`) |
+| `/data/getDataLookup` | Raw rows by entity + ids |
+
+**Role access** ([`src/server/apis/data/index.ts`](src/server/apis/data/index.ts)): routes currently require role `1` or `5`. Adjust `roleCheck([...])` per route as needed.
+
+**List endpoints** accept `page`, `pageSize`, `sortBy`, `order`, plus entity-specific filter fields in the body.
+
+**Data lookup** supports entities defined in [`repositories/dataLookup.ts`](src/repositories/dataLookup.ts): `authProviders`, `bots`, `chatHistories`, `chatTopics`, `knowledge`, `mcpCapabilities`, `media`, `monitorLogs`, `users`, `userBehaviorLogs`, `userMemories`.
+
+**Chat dates** use `Asia/Shanghai` for month/day boundaries. `currentTime` can be any instant in the target month; the handler queries that full calendar month.
 
 ---
 
 ## How to extend
 
-### New REST API
+### New data endpoint
 
-1. Add `src/server/apis/<name>/` with `index.ts` (Router + `wrapRoute`), `midware.ts`, `handler.ts`.
-2. Register in [`server/index.ts`](src/server/index.ts): `listener.use('/prefix', …, yourRouter)`.
-3. Outbound calls to other services: propagate `traceparent` as above when telemetry is on.
+1. Add query logic in `src/repositories/<domain>.ts`.
+2. Add handler in `src/server/apis/data/handler.ts`.
+3. Add middleware wrapper in `src/server/apis/data/midware.ts`.
+4. Register route in `src/server/apis/data/index.ts` with `roleCheck`.
 
-Example route registration:
+Example:
 
 ```typescript
-import { Router } from 'express'
-import { wrapRoute } from '../../midwares/trace'
-import { myMidware } from './midware'
-
-const router = Router()
-router.post('/path', wrapRoute('/api/path', myMidware))
-export default router
+router.post('/getExample', roleCheck([1, 5]), _getExample)
 ```
 
-### Redis Pub/Sub handler
+### New lookup entity
 
-Use `onInvoke` from [`handlers/wrapper.ts`](src/handlers/wrapper.ts) (see [`handlers/messenger/index.ts`](src/handlers/messenger/index.ts)) instead of a non-existent `withSpan`.
-
-### Redis List (msglist)
-
-Same pattern: [`handlers/msglist/index.ts`](src/handlers/msglist/index.ts) + `onInvoke`.
-
-### RabbitMQ
-
-Extend [`rabbitmq/handlers/index.ts`](src/rabbitmq/handlers/index.ts); wiring lives under [`rabbitmq/index.ts`](src/rabbitmq/index.ts).
+Add the entity key and table name to `TABLE_MAP` in [`repositories/dataLookup.ts`](src/repositories/dataLookup.ts), and mirror the type on the frontend.
 
 ---
 
 ## Environment variables
 
-See `.env.example` for the full list. Common entries include:
+See `.env.example` for a full template. Variables used at runtime:
 
-- `HTTP_PORT`, `AUTH_HOST` / `AUTH_PORT`, `KEYPAIR_PATH`
-- Redis: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `CHANNEL_LIST`, `MSG_LIST_LISTEN`, `REDIS_STREAMS_CONFIG`
-- RabbitMQ: `MQ_*`, `MQ_ROUTING_KEYS_LISTEN`, `MQ_QUEUE_CONSUME`
-- Postgres: `PG_*`
-- `IP_WHITELIST` (non-dev)
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `SERVICE_NAME` | yes | Service identifier |
+| `NODE_ENV` | yes | `dev` skips IP whitelist |
+| `HTTP_PORT` | yes | HTTP listen port |
+| `CORS_ORIGINS` | yes | Comma-separated allowed origins |
+| `IP_WHITELIST` | non-dev | Comma-separated IPs; `*` wildcards supported |
+| `AUTH_HOST`, `AUTH_PORT` | yes | Auth service for JWT public key |
+| `REDIS_HOSTS`, `REDIS_PORT`, `REDIS_PASSWORD` | yes | Rate limiter backend |
+| `REDIS_USE_CLUSTER`, `REDIS_USE_TLS` | no | Redis connection options |
+| `PG_HOST`, `PG_PORT`, `PG_USERNAME`, `PG_PASSWORD`, `PG_DATABASE` | yes | PostgreSQL |
+| `PG_MAX_CONNECTIONS`, `PG_USE_TLS` | no | Pool size and TLS |
 
----
-
-## Conventions
-
-**RabbitMQ routing keys** (example):
-
-`from_service.to_service.task.function[.RESULT]`
-
-**Redis list keys** for task flows often follow `service:route:STATUS` patterns; align with downstream consumers.
+GeoLite2 database (`GeoLite2-City.mmdb`) is bundled under `src/services/` and copied to `dist/services/` on build.
 
 ---
 
 ## Scripts
 
 ```bash
-npm run dev    # build + run with .env
-npm run build
-npm start      # production entry (see package.json)
+npm run dev     # build + run with .env
+npm run build   # eslint + tsc + copy assets
+npm start       # production entry (see package.json)
 ```
 
 ---
 
 ## Graceful shutdown
 
-[`init.ts`](src/init.ts) coordinates stopping HTTP/WebSocket, Redis, RabbitMQ, Postgres, and related loops on `SIGINT` / `SIGTERM`.
+[`handlers/process.ts`](src/handlers/process.ts) on `SIGINT` / `SIGTERM`:
+
+1. Stop HTTP server
+2. Disconnect Redis
+3. Close PostgreSQL pool
+4. Tear down MaxMind client
