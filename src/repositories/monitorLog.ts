@@ -50,16 +50,8 @@ export const queryMonitorLogsTraces = async (
     if (!orderCol) throw 'INVALID_SORT_BY'
 
     const traceIdFilter = filters.traceId || null
-    let startTimeStart: unknown = filters.startTimeStart || null
-    let startTimeEnd: unknown = filters.startTimeEnd || null
 
-    if (Array.isArray(filters.startTimeMs)) {
-        const [start, end] = filters.startTimeMs as [unknown?, unknown?]
-        if (start != null && start !== '') startTimeStart = start
-        if (end != null && end !== '') startTimeEnd = end
-    }
-
-    const groupParams = [traceIdFilter, startTimeStart, startTimeEnd]
+    const groupParams = [traceIdFilter]
     const countSql = `
         SELECT COUNT(*)::int AS total
         FROM (
@@ -67,8 +59,6 @@ export const queryMonitorLogsTraces = async (
             FROM ${MONITOR_LOG_TABLE}
             WHERE ($1::text IS NULL OR trace_id = $1)
             GROUP BY trace_id
-            HAVING ($2::bigint IS NULL OR MIN(start_ms) >= $2)
-               AND ($3::bigint IS NULL OR MIN(start_ms) <= $3)
         ) grouped
     `
 
@@ -83,10 +73,8 @@ export const queryMonitorLogsTraces = async (
         FROM ${MONITOR_LOG_TABLE}
         WHERE ($1::text IS NULL OR trace_id = $1)
         GROUP BY trace_id
-        HAVING ($2::bigint IS NULL OR MIN(start_ms) >= $2)
-           AND ($3::bigint IS NULL OR MIN(start_ms) <= $3)
         ORDER BY MIN(start_ms) ${order === 'asc' ? 'ASC' : 'DESC'}
-        LIMIT $4 OFFSET $5
+        LIMIT $2 OFFSET $3
     `
 
     let countRes: QueryResult<{ total: number }>
