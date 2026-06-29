@@ -19,6 +19,11 @@ const TABLE_MAP = {
     userMemories: 'user_memories',
 } as const
 
+const LOOKUP_COLUMN_MAP: Partial<Record<DataLookupEntity, string>> = {
+    monitorLogs: 'span_id',
+    userBehaviorLogs: 'user_id',
+}
+
 /**
  * Lookup records by entity and ids
  * @param entity entity name
@@ -34,9 +39,10 @@ export const lookupData = async (
     if (ids.length === 0) return []
 
     const tableName = TABLE_MAP[entity as DataLookupEntity]
+    const column = LOOKUP_COLUMN_MAP[entity as DataLookupEntity] ?? 'id'
     const sql = `
         SELECT * FROM ${tableName}
-        WHERE id = ANY($1)
+        WHERE ${column} = ANY($1)
     `
 
     let res: QueryResult<Record<string, unknown>>
