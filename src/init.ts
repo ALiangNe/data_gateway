@@ -56,9 +56,9 @@ export const initRedisModules = async () => {
             REDIS_PASSWORD,
             REDIS_USE_CLUSTER,
             REDIS_USE_TLS,
-            onReady: () => { console.log('Redis cache ready in SERVICE_GATEWAY') },
-            onError: (e: unknown) => { console.error('Redis cache error in SERVICE_GATEWAY: ', e) },
-            onReconnecting: () => { console.log('Redis cache reconnecting in SERVICE_GATEWAY') },
+            onReady: () => { console.log('Redis cache ready in DATA_GATEWAY') },
+            onError: (e: unknown) => { console.error('Redis cache error in DATA_GATEWAY: ', e) },
+            onReconnecting: () => { console.log('Redis cache reconnecting in DATA_GATEWAY') },
         })
     } catch (e) {
         console.error('initCache() ERROR: ', e)

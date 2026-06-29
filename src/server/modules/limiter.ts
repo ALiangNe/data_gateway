@@ -1,5 +1,5 @@
 /**
- * Limiter module For Security Purpose (SERVICE_GATEWAY)
+ * Limiter module For Security Purpose (DATA_GATEWAY)
  */
 import { RateLimiterRedis } from 'rate-limiter-flexible'
 import { redisClient } from '../../modules/cache'
@@ -18,7 +18,7 @@ export const prepareRateLimiter = () => {
             duration: 1, // per second
         })
     } catch (e) {
-        console.error('Error when initialising rate limiter in SERVICE_GATEWAY: ', e)
+        console.error('Error when initialising rate limiter in DATA_GATEWAY: ', e)
         throw 'ERROR_INIT_RATE_LIMITER'
     }
 

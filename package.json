@@ -1,5 +1,5 @@
 {
-    "name": "service_gateway",
+    "name": "DATA_GATEWAY",
     "version": "1.0.0",
     "description": "service entry point",
     "main": "app.js",

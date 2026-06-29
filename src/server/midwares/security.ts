@@ -1,5 +1,5 @@
 /**
- * Security Related Middleware (SERVICE_GATEWAY)
+ * Security Related Middleware (DATA_GATEWAY)
  */
 import type { Request, Response, NextFunction } from 'express'
 import { rateLimiter } from '../modules/limiter'
