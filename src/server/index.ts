@@ -33,8 +33,9 @@ listener.use('/data', rateLimiteCheck, tokenCheck, dataRoute)
 export const startHTTPServer = (HTTP_PORT: number): Server => {
     let server: Server | undefined
     try {
-        // server = listener.listen(HTTP_PORT, '0.0.0.0', () => { console.log('HTTP Server listening at port ' + HTTP_PORT) })
-        server = listener.listen(HTTP_PORT, '10.100.0.1', () => { console.log('HTTP Server listening at port ' + HTTP_PORT) })
+        server = listener.listen(HTTP_PORT, '0.0.0.0', () => { console.log('HTTP Server listening at port ' + HTTP_PORT) })
+        // server = listener.listen(HTTP_PORT, '10.100.0.1', () => { console.log('HTTP Server listening at port ' + HTTP_PORT) })
+        // server = listener.listen(HTTP_PORT, '10.100.1.1', () => { console.log('HTTP Server listening at port ' + HTTP_PORT) })
     } catch (e) {
         console.error('Error when starting HTTP server: ', e)
         process.emit('SIGINT')

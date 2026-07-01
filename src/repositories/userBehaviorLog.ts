@@ -241,6 +241,7 @@ export const queryUserBehaviorLogs = async (
             FROM ${USER_BEHAVIOR_LOG_TABLE} l
             INNER JOIN log_group_page g
                 ON ${groupFields.map((field) => `g.${field} = l.${field}`).join(' AND ')}
+            ${conditions.length > 0 ? `WHERE ${conditions.map((c) => `l.${c}`).join(' AND ')}` : ''}
         ),
         ${aggregateCtes}
 
