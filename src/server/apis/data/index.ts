@@ -10,6 +10,7 @@ import {
     _getMonitorLogsTrace,
     _getUsers,
     _getUserBehaviorLogs,
+    _getUserBehaviorStats,
     _getUserMemory,
 } from './midware'
 
@@ -21,6 +22,7 @@ router.post('/getMcpCapabilities', roleCheck([1, 5]), _getMcpCapabilities)
 router.post('/getMonitorLogsTrace', roleCheck([1, 5]), _getMonitorLogsTrace)
 router.post('/getUsers', roleCheck([1, 5]), _getUsers)
 router.post('/getUserBehaviorLogs', roleCheck([1, 5]), _getUserBehaviorLogs)
+router.post('/getUserBehaviorStats', roleCheck([1, 5]), _getUserBehaviorStats)
 router.post('/getUserMemory', roleCheck([1, 5]), _getUserMemory)
 router.post('/getChatActiveDates', roleCheck([1, 5]), _getChatActiveDates)
 router.post('/getChatHistories', roleCheck([1, 5]), _getChatHistories)

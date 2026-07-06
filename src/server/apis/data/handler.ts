@@ -5,10 +5,10 @@ import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
 import { queryMonitorLogsTrace } from '../../../repositories/monitorLog'
 import { queryUsers } from '../../../repositories/user'
-import { queryUserBehaviorLogs } from '../../../repositories/userBehaviorLog'
+import { queryUserBehaviorLogs, queryUserBehaviorStats } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, DataLookupEntity, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, DataLookupEntity, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorStatsQueryResult, UserBehaviorStatsResult } from '../../../type'
 
 /**
  * Get bots handler.
@@ -238,6 +238,47 @@ export const getUserBehaviorLogs_ = async (
     return {
         list,
         total: result.total,
+    }
+}
+
+/**
+ * Get user behavior stats handler.
+ * @param createdAt - createdAt range filter
+ * @returns user behavior stats
+ */
+export const getUserBehaviorStats_ = async (
+    createdAt: [string?, string?] | undefined,
+): Promise<UserBehaviorStatsResult> => {
+    let result: UserBehaviorStatsQueryResult
+
+    try {
+        result = await queryUserBehaviorStats(createdAt)
+    } catch (error) {
+        console.error('get user behavior stats failed: ', error)
+        throw error
+    }
+
+    const regions = new Map<string, number>()
+
+    for (const clientIp of result.clientIps) {
+        const { country } = getLocationByIp(clientIp)
+        const regionKey = country ?? 'Unknown'
+        regions.set(regionKey, (regions.get(regionKey) ?? 0) + 1)
+    }
+
+    const regionList = [...regions.entries()]
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count)
+
+    return {
+        deviceCount: result.deviceCount,
+        sessionCount: result.sessionCount,
+        sessions: result.sessions.map((session) => ({
+            deviceId: session.deviceId,
+            createdAt: session.createdAt.toISOString(),
+        })),
+        regions: regionList,
+        mediaClickEvents: result.mediaClickEvents,
     }
 }
 

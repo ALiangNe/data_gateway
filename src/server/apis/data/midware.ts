@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTraceDetail, User } from '../../../type'
-import { getBots_, getChatActiveDates_, getChatHistories_, getDataLookup_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getUsers_, getUserBehaviorLogs_, getUserMemory_ } from './handler'
-import type { UserBehaviorLogAggregate } from '../../../type'
+import { getBots_, getChatActiveDates_, getChatHistories_, getDataLookup_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getUsers_, getUserBehaviorLogs_, getUserBehaviorStats_, getUserMemory_ } from './handler'
+import type { UserBehaviorLogAggregate, UserBehaviorStatsResult } from '../../../type'
 import { errObj } from '../../modules/errs'
 
 /**
@@ -126,6 +126,28 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
         )
     } catch (error) {
         console.error('getUserBehaviorLogs failed: ', error)
+    }
+
+    res.status(200).json({ ...errObj[200], data: result })
+}
+
+/**
+ * getUserBehaviorStats middleware.
+ */
+export const _getUserBehaviorStats = async (req: Request, res: Response, _next: NextFunction) => {
+    const { createdAt } = req.body
+
+    let result: UserBehaviorStatsResult = {
+        deviceCount: 0,
+        sessionCount: 0,
+        sessions: [],
+        regions: [],
+        mediaClickEvents: [],
+    }
+    try {
+        result = await getUserBehaviorStats_(createdAt)
+    } catch (error) {
+        console.error('getUserBehaviorStats failed: ', error)
     }
 
     res.status(200).json({ ...errObj[200], data: result })

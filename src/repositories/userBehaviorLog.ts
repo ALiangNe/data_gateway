@@ -2,7 +2,7 @@
  * User behavior log repository
  */
 import { pgClient, parseError } from '../modules/pg'
-import type { AggregateConfig, DataListResult, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorLogDeviceAggregate, UserBehaviorLogSessionAggregate, UserBehaviorLogUserAggregate, UserBehaviorValue, UserBehaviorValueCount } from '../type'
+import type { AggregateConfig, DataListResult, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorLogDeviceAggregate, UserBehaviorLogSessionAggregate, UserBehaviorLogUserAggregate, UserBehaviorStatsQueryResult, UserBehaviorValue, UserBehaviorValueCount } from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_BEHAVIOR_LOG_TABLE = 'user_behavior_logs'
@@ -270,5 +270,104 @@ export const queryUserBehaviorLogs = async (
     return {
         list: listRes.rows.map(mapper),
         total: countRes.rows[0]?.total ?? 0,
+    }
+}
+
+/**
+ * Query user behavior stats
+ * @param createdAt created_at range filter
+ * @returns user behavior stats
+ */
+export const queryUserBehaviorStats = async (
+    createdAt?: [string?, string?],
+): Promise<UserBehaviorStatsQueryResult> => {
+    if (!pgClient) throw 'POSTGRES_NOT_READY'
+
+    const totalsSql = `
+        SELECT
+            COUNT(DISTINCT device_id)::int AS "deviceCount",
+            COUNT(DISTINCT session_id)::int AS "sessionCount"
+        FROM ${USER_BEHAVIOR_LOG_TABLE}
+    `
+
+    const values: unknown[] = []
+    const conditions: string[] = []
+
+    if (createdAt) {
+        const [start, end] = createdAt
+
+        if (start != null && start !== '') {
+            conditions.push(`created_at >= $${values.length + 1}`)
+            values.push(start)
+        }
+
+        if (end != null && end !== '') {
+            conditions.push(`created_at <= $${values.length + 1}`)
+            values.push(end)
+        }
+    }
+
+    const whereClause = conditions.length > 0
+        ? `WHERE ${conditions.join(' AND ')}`
+        : ''
+
+    const sessionsSql = `
+        SELECT
+            MIN(device_id) AS "deviceId",
+            MIN(created_at) AS "createdAt"
+        FROM ${USER_BEHAVIOR_LOG_TABLE}
+        ${whereClause}
+        GROUP BY session_id
+    `
+
+    const clientIpsSql = `
+        SELECT
+            MIN(client_ip) AS "clientIp"
+        FROM ${USER_BEHAVIOR_LOG_TABLE}
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} client_ip IS NOT NULL
+        GROUP BY session_id
+    `
+
+    const mediaClickEventsSql = `
+        SELECT
+            event_name AS "eventName",
+            COUNT(*)::int AS count
+        FROM ${USER_BEHAVIOR_LOG_TABLE}
+        ${whereClause}${whereClause ? ' AND' : 'WHERE'} (
+            event_name LIKE 'nav-%' OR event_name LIKE 'contact-%'
+        )
+        GROUP BY event_name
+    `
+
+    let totalsRes: QueryResult<{ deviceCount: number; sessionCount: number }>
+    let sessionsRes: QueryResult<Record<string, unknown>>
+    let clientIpsRes: QueryResult<Record<string, unknown>>
+    let mediaClickEventsRes: QueryResult<Record<string, unknown>>
+
+    try {
+        [totalsRes, sessionsRes, clientIpsRes, mediaClickEventsRes] = await Promise.all([
+            pgClient.query(totalsSql),
+            pgClient.query(sessionsSql, values),
+            pgClient.query(clientIpsSql, values),
+            pgClient.query(mediaClickEventsSql, values),
+        ])
+    } catch (error) {
+        throw parseError(error)
+    }
+
+    const totals = totalsRes.rows[0]
+
+    return {
+        deviceCount: totals?.deviceCount ?? 0,
+        sessionCount: totals?.sessionCount ?? 0,
+        sessions: sessionsRes.rows.map((row) => ({
+            deviceId: row.deviceId as string,
+            createdAt: new Date(row.createdAt as string),
+        })),
+        clientIps: clientIpsRes.rows.map((row) => row.clientIp as string),
+        mediaClickEvents: mediaClickEventsRes.rows.map((row) => ({
+            eventName: row.eventName as string,
+            count: row.count as number,
+        })),
     }
 }

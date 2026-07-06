@@ -182,6 +182,37 @@ export type UserBehaviorLogAggregate =
     | UserBehaviorLogDeviceAggregate
     | UserBehaviorLogUserAggregate
 
+export type UserBehaviorStatsQueryResult = {
+    deviceCount: number
+    sessionCount: number
+    sessions: {
+        deviceId: string
+        createdAt: Date
+    }[]
+    clientIps: string[]
+    mediaClickEvents: {
+        eventName: string
+        count: number
+    }[]
+}
+
+export type UserBehaviorStatsResult = {
+    deviceCount: number
+    sessionCount: number
+    sessions: {
+        deviceId: string
+        createdAt: string
+    }[]
+    regions: {
+        key: string
+        count: number
+    }[]
+    mediaClickEvents: {
+        eventName: string
+        count: number
+    }[]
+}
+
 export type AggregateConfig = {
     groupFields: string[]
     aggregateFields: {
