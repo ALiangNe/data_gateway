@@ -125,8 +125,8 @@ export const getMonitorLogsTrace_ = async (traceId: string): Promise<MonitorTrac
  */
 export const getUsers_ = async (
     filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
+    page: number | undefined,
+    pageSize: number | undefined,
     sortBy: string | undefined,
     order: 'asc' | 'desc',
 ): Promise<DataListResult<User>> => {

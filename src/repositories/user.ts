@@ -36,7 +36,7 @@ const toUser = (row: Record<string, unknown>): User => {
 }
 
 /**
- * Query users with pagination and ordering
+ * Query users with optional pagination and ordering
  * @param filters filter criteria
  * @param page page number
  * @param pageSize items per page
@@ -46,15 +46,18 @@ const toUser = (row: Record<string, unknown>): User => {
  */
 export const queryUsers = async (
     filters: Record<string, unknown> = {},
-    page: number = 1,
-    pageSize: number = 20,
+    page?: number,
+    pageSize?: number,
     sortBy: string = 'createdAt',
     order: 'asc' | 'desc' = 'desc',
 ): Promise<DataListResult<User>> => {
     if (!pgClient) throw 'POSTGRES_NOT_READY'
 
-    if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-    if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
+    const paginated = page != null && pageSize != null
+    if (paginated) {
+        if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
+        if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
+    }
     if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
 
     const values: unknown[] = []
@@ -90,8 +93,7 @@ export const queryUsers = async (
 
     const countSql = `SELECT COUNT(*)::int AS total FROM ${USER_TABLE} u ${whereClause}`
 
-    values.push(pageSize, (page - 1) * pageSize)
-    const sql = `
+    let sql = `
         SELECT u.*, ap.providers
         FROM ${USER_TABLE} u
         LEFT JOIN LATERAL (
@@ -101,15 +103,20 @@ export const queryUsers = async (
         ) ap ON true
         ${whereClause}
         ORDER BY u.${orderCol} ${order === 'asc' ? 'ASC' : 'DESC'}
-        LIMIT $${values.length - 1} OFFSET $${values.length}
     `
+
+    const queryValues = [...values]
+    if (paginated) {
+        queryValues.push(pageSize, (page - 1) * pageSize)
+        sql += ` LIMIT $${queryValues.length - 1} OFFSET $${queryValues.length}`
+    }
 
     let countRes: QueryResult<{ total: number }>
     let res: QueryResult<Record<string, unknown>>
     try {
         [countRes, res] = await Promise.all([
-            pgClient.query(countSql, values.slice(0, values.length - 2)),
-            pgClient.query(sql, values),
+            pgClient.query(countSql, values),
+            pgClient.query(sql, queryValues),
         ])
     } catch (error) {
         throw parseError(error)
