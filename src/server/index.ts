@@ -6,6 +6,7 @@ export type { Server }
 import cors from 'cors'
 import express from 'express'
 import { ipCheck, logRequest, tokenCheck } from './midwares/auth'
+import { errorHandler } from './midwares/error'
 import { rateLimiteCheck } from './midwares/security'
 import healthRoute from './apis/health'
 import dataRoute from './apis/data'
@@ -29,6 +30,7 @@ listener.use(ipCheck)
 // load APIs (routes to business logc)
 listener.use('/', healthRoute)
 listener.use('/data', rateLimiteCheck, tokenCheck, dataRoute)
+listener.use(errorHandler)
 
 export const startHTTPServer = (HTTP_PORT: number): Server => {
     let server: Server | undefined

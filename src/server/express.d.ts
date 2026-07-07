@@ -9,5 +9,6 @@ declare module 'express-serve-static-core' {
       role: number
       jti: string
     }
+    httpTraceError?: unknown
   }
 }

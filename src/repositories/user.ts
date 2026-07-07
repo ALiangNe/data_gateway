@@ -127,3 +127,27 @@ export const queryUsers = async (
         total: countRes.rows[0]?.total as number,
     }
 }
+
+/**
+ * Update user permission
+ * @param userId user id
+ * @param role new role
+ */
+export const updateUserPermission = async (
+    userId: string,
+    role: number,
+): Promise<void> => {
+    if (!pgClient) throw 'POSTGRES_NOT_READY'
+
+    const sql = `
+        UPDATE ${USER_TABLE}
+        SET role = $1
+        WHERE id = $2
+    `
+
+    try {
+        await pgClient.query(sql, [role, userId])
+    } catch (error) {
+        throw parseError(error)
+    }
+}

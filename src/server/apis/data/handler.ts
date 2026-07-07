@@ -4,7 +4,7 @@ import { lookupData } from '../../../repositories/dataLookup'
 import { queryKnowledge } from '../../../repositories/knowledge'
 import { queryMcpCapabilities } from '../../../repositories/mcpCapability'
 import { queryMonitorLogsTrace } from '../../../repositories/monitorLog'
-import { queryUsers } from '../../../repositories/user'
+import { queryUsers, updateUserPermission } from '../../../repositories/user'
 import { queryUserBehaviorLogs, queryUserBehaviorStats } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
@@ -370,4 +370,45 @@ export const getDataLookup_ = async (
         console.error('get data lookup failed: ', error)
         throw error
     }
+}
+
+/**
+ * Update user permission handler.
+ * @param userId target user id
+ * @param role new role
+ * @param editedBy current user id
+ * @returns updated user id and role
+ */
+export const updateUserPermission_ = async (
+    userId: string,
+    role: number,
+    editedBy: string,
+): Promise<void> => {
+    if (editedBy === userId) throw new Error('CANNOT_UPDATE_SELF')
+
+    let rows: Record<string, unknown>[]
+    try {
+        rows = await lookupData('users', [editedBy, userId])
+    } catch (error) {
+        console.error('lookup user permission rows failed: ', error)
+        throw error
+    }
+
+    const editor = rows.find((row) => row.id === editedBy)
+    const targetUser = rows.find((row) => row.id === userId)
+    if (!editor || !targetUser) throw new Error('USER_NOT_FOUND')
+
+    const editorRole = editor.role as number
+
+    if ((targetUser.role as number) <= editorRole) throw new Error('FORBIDDEN_UPDATE_PERMISSION')
+    if (role <= editorRole) throw new Error('FORBIDDEN_UPDATE_PERMISSION')
+
+    try {
+        await updateUserPermission(userId, role)
+    } catch (error) {
+        console.error('update user permission failed: ', error)
+        throw error
+    }
+
+    return
 }

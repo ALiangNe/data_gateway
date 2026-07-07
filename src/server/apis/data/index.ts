@@ -12,6 +12,7 @@ import {
     _getUserBehaviorLogs,
     _getUserBehaviorStats,
     _getUserMemory,
+    _updateUserPermission,
 } from './midware'
 
 const router = Router()
@@ -27,5 +28,6 @@ router.post('/getUserMemory', roleCheck([1, 5]), _getUserMemory)
 router.post('/getChatActiveDates', roleCheck([1, 5]), _getChatActiveDates)
 router.post('/getChatHistories', roleCheck([1, 5]), _getChatHistories)
 router.post('/getDataLookup', roleCheck([1, 5]), _getDataLookup)
+router.post('/updateUserPermission', roleCheck([0, 1, 2]), _updateUserPermission)
 
 export default router
