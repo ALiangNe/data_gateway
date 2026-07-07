@@ -26,5 +26,8 @@ build/
 .gitignore
 
 
+# Dockerfiles (not needed inside image)
 Dockerfile*
+
+# Key pairs (local secrets)
 keypairs/

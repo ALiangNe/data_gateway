@@ -1,142 +1,136 @@
 # data_gateway
 
-HTTP API backend for the **Data Console** (`data_web`). Reads operational data from PostgreSQL and exposes it to authenticated console users.
+HTTP API for the **Data Console** (`data_web`). Reads operational data from PostgreSQL and serves authenticated console users.
 
-## Intro
-
-The gateway is a focused Express service: no WebSocket, message queues, or telemetry pipeline. Incoming requests pass through CORS, logging, IP whitelist (non-dev), rate limiting, and JWT verification before reaching data handlers.
-
-**Features**
-
-- REST APIs under `/data` for bots, users, knowledge, logs, chat history, and raw ID lookup
-- JWT auth via `auth` header (RS256 public key fetched from auth service)
-- Role-based access control on each route (`roleCheck`)
-- PostgreSQL via `pg` pool
-- Redis for HTTP rate limiting
-- MaxMind GeoLite2 for IP geolocation in user behavior logs
+Express service: CORS → logging → IP whitelist (non-dev) → rate limit → JWT → role check → handler → repository.
 
 ---
 
-## Project layout
+## Project structure
 
 ```
 data_gateway/
 ├── Dockerfile
-├── .env.example
+├── .env.example          # Environment template
 ├── package.json
 └── src/
-    ├── app.ts                 Process entry & signals
-    ├── init.ts                Startup / shutdown
-    ├── config.ts              Environment variables
-    ├── type.ts                Shared domain types
-    ├── errors/                Postgres error mapping
-    ├── types/                 Global TS augmentations (e.g. SIGSTART)
-    ├── handlers/              Process lifecycle (SIGSTART, SIGINT, …)
-    ├── modules/               cache · jwt · pg
-    ├── repositories/          SQL layer (bot, user, chat, logs, lookup, …)
-    ├── services/              MaxMind + GeoLite2-City.mmdb
+    ├── app.ts            # Process entry; registers signal handlers
+    ├── handlers/
+    │   └── process.ts    # SIGSTART / SIGINT / SIGTERM lifecycle
+    ├── init.ts           # Startup & shutdown orchestration
+    ├── config.ts         # Environment variables
+    ├── type.ts           # Shared domain types
+    │
+    ├── modules/          # Infrastructure clients
+    │   ├── cache.ts      # Redis (rate limiter backend)
+    │   ├── jwt.ts        # JWT key loading & verification helpers
+    │   └── pg.ts         # PostgreSQL pool
+    │
+    ├── repositories/     # SQL layer (one file per domain)
+    │   ├── bot.ts
+    │   ├── chatHistory.ts
+    │   ├── dataLookup.ts
+    │   ├── knowledge.ts
+    │   ├── mcpCapability.ts
+    │   ├── monitorLog.ts
+    │   ├── user.ts
+    │   ├── userBehaviorLog.ts
+    │   └── userMemory.ts
+    │
+    ├── services/         # Non-HTTP service helpers
+    │   ├── index.ts      # Init / teardown
+    │   ├── maxmind.ts    # IP geolocation
+    │   └── GeoLite2-City.mmdb   # Bundled at build (gitignored)
+    │
+    ├── errors/
+    │   └── postgres.ts   # Postgres error → app error codes
+    │
     └── server/
-        ├── index.ts           Express app & route mounts
+        ├── index.ts      # Express app, middleware chain, route mounts
+        ├── express.d.ts  # Request type extensions (req.user)
         ├── apis/
-        │   ├── data/          index · midware · handler
-        │   └── health/        index · midware · handlers
-        ├── midwares/          auth · permission · security
-        └── modules/           errs · limiter
+        │   ├── health/   # GET /health, GET /ready
+        │   └── data/     # POST /data/* (see below)
+        ├── midwares/
+        │   ├── auth.ts       # Logging, IP whitelist, JWT
+        │   ├── permission.ts # roleCheck
+        │   └── security.ts   # Rate limiting
+        └── modules/
+            ├── errs.ts     # errno / errmsg response shape
+            └── limiter.ts  # Redis rate limiter
 ```
 
-**Routes** ([`src/server/index.ts`](src/server/index.ts)):
+### Layer convention (`/data` APIs)
 
-| Prefix | Middleware | Endpoints |
-|--------|------------|-----------|
-| `/` | — | `GET /health`, `GET /ready` |
-| `/data` | rate limit → JWT | POST data console APIs |
+Each endpoint follows the same stack:
 
-Each API follows **index → midware → handler → repository**.
+```
+index.ts   → route + roleCheck
+midware.ts → try/catch, default empty result
+handler.ts → business logic (e.g. MaxMind enrichment)
+repository → SQL queries
+```
 
 ---
 
-## Request flow
+## Routes
 
-1. `express.json()` parses the body.
-2. CORS, request logging, IP whitelist (skipped in `dev`).
-3. On `/data`: Redis rate limiter, then JWT verification (`auth` header).
-4. Route handler runs `roleCheck`, then handler logic → repository → PostgreSQL.
-5. Response shape: `{ errno, errmsg, data }` (see [`server/modules/errs.ts`](src/server/modules/errs.ts)).
+| Prefix | Auth | Endpoints |
+|--------|------|-----------|
+| `/` | — | `GET /health`, `GET /ready` |
+| `/data` | JWT + rate limit | POST data APIs below |
 
-JWT payload is attached to `req.user`:
-
-```typescript
-{ userId, botId, soulId, role, jti }
-```
+Response shape: `{ errno, errmsg, data }`. JWT payload on `req.user`: `{ userId, botId, soulId, role, jti }`.
 
 ---
 
 ## Data APIs
 
-All routes are **POST** under `/data`. Request bodies are JSON.
+All **POST** under `/data`, JSON body. List endpoints accept `page`, `pageSize`, `sortBy`, `order`, plus entity filters.
 
 | Route | Description |
 |-------|-------------|
-| `/data/getBots` | Paginated bot list with filters and sort |
-| `/data/getKnowledge` | Paginated knowledge entries |
+| `/data/getBots` | Paginated bots |
+| `/data/getKnowledge` | Paginated knowledge |
 | `/data/getMcpCapabilities` | Paginated MCP capabilities |
-| `/data/getMonitorLogsTrace` | Monitor trace detail by `traceId` |
-| `/data/getUsers` | Paginated user list |
-| `/data/getUserBehaviorLogs` | Aggregated behavior logs (with IP geolocation) |
-| `/data/getUserMemory` | User memory text by `userId` + `soulId` |
-| `/data/getChatActiveDates` | Active chat dates in a month (`userId`, `currentTime`) |
-| `/data/getChatHistories` | Chat messages for a local date (`userId`, `soulId`, `date`) |
+| `/data/getMonitorLogsTrace` | Trace detail by `traceId` |
+| `/data/getUsers` | Paginated users |
+| `/data/getUserBehaviorLogs` | Aggregated behavior logs (IP → country via MaxMind) |
+| `/data/getUserBehaviorStats` | Dashboard stats: totals, sessions, regions, media clicks |
+| `/data/getUserMemory` | Memory text by `userId` + `soulId` |
+| `/data/getChatActiveDates` | Active chat dates in a month (`Asia/Shanghai`) |
+| `/data/getChatHistories` | Chat messages for a local date |
 | `/data/getDataLookup` | Raw rows by entity + ids |
 
-**Role access** ([`src/server/apis/data/index.ts`](src/server/apis/data/index.ts)): routes currently require role `1` or `5`. Adjust `roleCheck([...])` per route as needed.
+Roles: all routes currently use `roleCheck([1, 5])` in [`src/server/apis/data/index.ts`](src/server/apis/data/index.ts).
 
-**List endpoints** accept `page`, `pageSize`, `sortBy`, `order`, plus entity-specific filter fields in the body.
-
-**Data lookup** supports entities defined in [`repositories/dataLookup.ts`](src/repositories/dataLookup.ts): `authProviders`, `bots`, `chatHistories`, `chatTopics`, `knowledge`, `mcpCapabilities`, `media`, `monitorLogs`, `users`, `userBehaviorLogs`, `userMemories`.
-
-**Chat dates** use `Asia/Shanghai` for month/day boundaries. `currentTime` can be any instant in the target month; the handler queries that full calendar month.
+**Data lookup** entities: see `TABLE_MAP` in [`src/repositories/dataLookup.ts`](src/repositories/dataLookup.ts).
 
 ---
 
-## How to extend
+## Extend
 
-### New data endpoint
+**New endpoint:** repository → handler → midware → register in `apis/data/index.ts`.
 
-1. Add query logic in `src/repositories/<domain>.ts`.
-2. Add handler in `src/server/apis/data/handler.ts`.
-3. Add middleware wrapper in `src/server/apis/data/midware.ts`.
-4. Register route in `src/server/apis/data/index.ts` with `roleCheck`.
-
-Example:
-
-```typescript
-router.post('/getExample', roleCheck([1, 5]), _getExample)
-```
-
-### New lookup entity
-
-Add the entity key and table name to `TABLE_MAP` in [`repositories/dataLookup.ts`](src/repositories/dataLookup.ts), and mirror the type on the frontend.
+**New lookup entity:** add to `TABLE_MAP` in `dataLookup.ts` (+ frontend type).
 
 ---
 
-## Environment variables
+## Environment
 
-See `.env.example` for a full template. Variables used at runtime:
+Copy `.env.example` to `.env`. Key groups:
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `SERVICE_NAME` | yes | Service identifier |
-| `NODE_ENV` | yes | `dev` skips IP whitelist |
-| `HTTP_PORT` | yes | HTTP listen port |
-| `CORS_ORIGINS` | yes | Comma-separated allowed origins |
-| `IP_WHITELIST` | non-dev | Comma-separated IPs; `*` wildcards supported |
-| `AUTH_HOST`, `AUTH_PORT` | yes | Auth service for JWT public key |
-| `REDIS_HOSTS`, `REDIS_PORT`, `REDIS_PASSWORD` | yes | Rate limiter backend |
-| `REDIS_USE_CLUSTER`, `REDIS_USE_TLS` | no | Redis connection options |
-| `PG_HOST`, `PG_PORT`, `PG_USERNAME`, `PG_PASSWORD`, `PG_DATABASE` | yes | PostgreSQL |
-| `PG_MAX_CONNECTIONS`, `PG_USE_TLS` | no | Pool size and TLS |
+| Group | Variables |
+|-------|-----------|
+| Basic | `SERVICE_NAME`, `NODE_ENV`, `HTTP_PORT`, `CORS_ORIGINS`, `IP_WHITELIST` |
+| Auth | `AUTH_HOST`, `AUTH_PORT` |
+| Redis | `REDIS_HOSTS`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_USE_CLUSTER`, `REDIS_USE_TLS` |
+| PostgreSQL | `PG_HOST`, `PG_PORT`, `PG_USERNAME`, `PG_PASSWORD`, `PG_DATABASE`, `PG_MAX_CONNECTIONS`, `PG_USE_TLS` |
+| Other | `PLATFORM_LIST` |
 
-GeoLite2 database (`GeoLite2-City.mmdb`) is bundled under `src/services/` and copied to `dist/services/` on build.
+GeoLite2 (`src/services/GeoLite2-City.mmdb`) is copied to `dist/services/` on `npm run build`. File is gitignored; place it locally before building.
+
+Container runtime: env vars must be injected at deploy time (see `Dockerfile`); `.env` is not baked into the image.
 
 ---
 
@@ -144,17 +138,8 @@ GeoLite2 database (`GeoLite2-City.mmdb`) is bundled under `src/services/` and co
 
 ```bash
 npm run dev     # build + run with .env
-npm run build   # eslint + tsc + copy assets
-npm start       # production entry (see package.json)
+npm run build   # eslint + tsc + copy errors/ and GeoLite2 mmdb
+npm start       # production (dist/)
 ```
 
----
-
-## Graceful shutdown
-
-[`handlers/process.ts`](src/handlers/process.ts) on `SIGINT` / `SIGTERM`:
-
-1. Stop HTTP server
-2. Disconnect Redis
-3. Close PostgreSQL pool
-4. Tear down MaxMind client
+**Shutdown** (`SIGINT` / `SIGTERM`): HTTP server → Redis → PostgreSQL → MaxMind.

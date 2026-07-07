@@ -1,14 +1,29 @@
+# macOS
 .DS_Store
+
+# Local environment and secrets
 .env
 env
+
+# Dependencies
 node_modules
+
+# API client collections (local only)
 bruno
+
+# Build output
 dist
+
+# Keys and certificates
 keys
 keypairs
+certs
+
+# Archives and deploy scripts
 *.zip
 deploy*.sh
-certs
+
+# Docker backup
 Dockerfile.bkup
 
 # MaxMind GeoIP database
