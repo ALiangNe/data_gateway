@@ -38,7 +38,7 @@ export const prepareKeyPair = async (options: PrepareKeyPairOptions) => {
         authPort = port
         let res
         try {
-            res = await axios.get(`http://${host}:${port}/key/public`)
+            res = await axios.get(`http://${host}:${port}/token/public-key`)
         } catch {
             throw 'FAILED_LOAD_PUBLIC_KEY'
         }

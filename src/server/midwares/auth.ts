@@ -64,19 +64,13 @@ export const ipCheck = (req: Request, res: Response, next: NextFunction) => {
 }
 
 /**
- * API token verification (JWT with RS256), only uses custom `auth` header.
+ * API token verification (JWT with RS256), uses Authorization Bearer header.
  */
 export const tokenCheck = async (req: Request, res: Response, next: NextFunction) => {
-
-    const authHeader = req.headers['auth']
-    if (!authHeader) {
-        return res.status(401).json({ errno: 401, errmsg: 'MISSING_PARAMETER_ACCESSTOKEN' })
+    const [type, token] = req.headers.authorization?.split(' ') ?? []
+    if (!token || type !== 'Bearer') {
+        return res.status(401).json(errObj[401])
     }
-    if (typeof authHeader !== 'string') {
-        return res.status(401).json({ errno: 401, errmsg: 'INVALID_ACCESSTOKEN' })
-    }
-
-    const token = authHeader
 
     let decoded: JwtPayload | null = null
     try {
