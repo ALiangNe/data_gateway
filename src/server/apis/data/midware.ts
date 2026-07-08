@@ -288,6 +288,14 @@ export const _updateUserPermission = async (req: Request, res: Response, _next: 
         )
     } catch (error) {
         console.error('updateUserPermission failed: ', error)
+        if (error instanceof Error && [
+            'CANNOT_UPDATE_SELF',
+            'USER_NOT_FOUND',
+            'FORBIDDEN_UPDATE_PERMISSION',
+        ].includes(error.message)) {
+            res.status(400).json({ errno: 400, errmsg: error.message })
+            return
+        }
         throw error
     }
 
