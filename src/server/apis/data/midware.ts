@@ -89,7 +89,8 @@ export const _getMonitorLogsTrace = async (req: Request, res: Response, _next: N
         result = await getMonitorLogsTrace_(traceId)
     } catch (error) {
         console.error('getMonitorLogsTrace failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })

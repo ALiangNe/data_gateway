@@ -81,18 +81,17 @@ export interface McpCapability {
 
 export interface MonitorSpan {
     spanId: string
-    parentSpanId: string
+    parentSpanId: string | null
     env: string
     service: string
     instanceId: string
-    name: string
+    eventName: string
     status: string
-    botId?: string | null
-    soulId?: string | null
     startTimeMs: number
     durationMs: number
     error?: string | null
-    meta?: Record<string, unknown>
+    traceAttributes?: Record<string, unknown>
+    metadata?: Record<string, unknown>
 }
 
 export interface MonitorTraceDetail {

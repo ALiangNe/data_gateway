@@ -22,14 +22,13 @@ export const queryMonitorLogsTrace = async (traceId: string): Promise<MonitorTra
             env,
             service,
             instance_id,
-            name,
+            event_name,
             status,
-            bot_id,
-            soul_id,
             start_ms,
             duration_ms,
             error,
-            meta
+            trace_attributes,
+            metadata
         FROM ${MONITOR_LOG_TABLE}
         WHERE trace_id = $1
     `
@@ -47,18 +46,17 @@ export const queryMonitorLogsTrace = async (traceId: string): Promise<MonitorTra
     for (const row of spansRes.rows) {
         const span: MonitorSpan = {
             spanId: row.span_id as string,
-            parentSpanId: row.parent_span_id as string,
+            parentSpanId: row.parent_span_id as string | null,
             env: row.env as string,
             service: row.service as string,
             instanceId: String(row.instance_id),
-            name: row.name as string,
+            eventName: row.event_name as string,
             status: row.status as string,
-            botId: row.bot_id as MonitorSpan['botId'],
-            soulId: row.soul_id as MonitorSpan['soulId'],
             startTimeMs: Number(row.start_ms),
             durationMs: Number(row.duration_ms),
             error: row.error as MonitorSpan['error'],
-            meta: row.meta as MonitorSpan['meta'],
+            traceAttributes: row.trace_attributes as MonitorSpan['traceAttributes'],
+            metadata: row.metadata as MonitorSpan['metadata'],
         }
         spans.push(span)
     }
