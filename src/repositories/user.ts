@@ -7,10 +7,10 @@ import type { QueryResult } from 'pg'
 
 const USER_TABLE = 'users'
 const AUTH_PROVIDER_TABLE = 'auth_providers'
+const SOUL_TABLE = 'souls'
 
 const USER_COLUMN_MAP: Record<string, string> = {
     id: 'id',
-    soulId: 'soul_id',
     email: 'email',
     username: 'username',
     password: 'password',
@@ -23,7 +23,7 @@ const USER_COLUMN_MAP: Record<string, string> = {
 const toUser = (row: Record<string, unknown>): User => {
     return {
         id: row.id as string,
-        soulId: row.soul_id as string,
+        soulId: (row.soul_id as string | null) ?? '',
         email: row.email as string,
         username: row.username as string,
         password: row.password as string | null,
@@ -94,13 +94,20 @@ export const queryUsers = async (
     const countSql = `SELECT COUNT(*)::int AS total FROM ${USER_TABLE} u ${whereClause}`
 
     let sql = `
-        SELECT u.*, ap.providers
+        SELECT u.*, ap.providers, soul.soul_id
         FROM ${USER_TABLE} u
         LEFT JOIN LATERAL (
             SELECT ARRAY_AGG(ap.provider ORDER BY ap.provider) AS providers
             FROM ${AUTH_PROVIDER_TABLE} ap
             WHERE ap.user_id = u.id
         ) ap ON true
+        LEFT JOIN LATERAL (
+            SELECT s.id AS soul_id
+            FROM ${SOUL_TABLE} s
+            WHERE s.user_id = u.id
+            ORDER BY s.created_at ASC
+            LIMIT 1
+        ) soul ON true
         ${whereClause}
         ORDER BY u.${orderCol} ${order === 'asc' ? 'ASC' : 'DESC'}
     `

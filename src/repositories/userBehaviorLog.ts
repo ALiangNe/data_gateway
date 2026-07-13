@@ -8,7 +8,6 @@ import type { QueryResult } from 'pg'
 const USER_BEHAVIOR_LOG_TABLE = 'user_behavior_logs'
 
 const SHARED_AGGREGATE_FIELDS: AggregateConfig['aggregateFields'] = [
-    { key: 'platforms', column: 'platform' },
     { key: 'user_agents', column: 'user_agent' },
     { key: 'screen_sizes', column: 'screen_size' },
     { key: 'languages', column: 'language' },
@@ -24,7 +23,6 @@ const toUserBehaviorLogSessionAggregate = (row: Record<string, unknown>): UserBe
     sessionId: row.sessionId as string,
     deviceIds: row.deviceIds as UserBehaviorValue[],
     userIds: row.userIds as UserBehaviorValue[],
-    platforms: row.platforms as UserBehaviorValue[],
     userAgents: row.userAgents as UserBehaviorValue[],
     screenSizes: row.screenSizes as UserBehaviorValue[],
     languages: row.languages as UserBehaviorValue[],
@@ -41,7 +39,6 @@ const toUserBehaviorLogDeviceAggregate = (row: Record<string, unknown>): UserBeh
     deviceId: row.deviceId as string,
     sessionIds: row.sessionIds as UserBehaviorValue[],
     userIds: row.userIds as UserBehaviorValue[],
-    platforms: row.platforms as UserBehaviorValue[],
     userAgents: row.userAgents as UserBehaviorValue[],
     screenSizes: row.screenSizes as UserBehaviorValue[],
     languages: row.languages as UserBehaviorValue[],
@@ -58,7 +55,6 @@ const toUserBehaviorLogUserAggregate = (row: Record<string, unknown>): UserBehav
     userId: row.userId as string,
     sessionIds: row.sessionIds as UserBehaviorValue[],
     deviceIds: row.deviceIds as UserBehaviorValue[],
-    platforms: row.platforms as UserBehaviorValue[],
     userAgents: row.userAgents as UserBehaviorValue[],
     screenSizes: row.screenSizes as UserBehaviorValue[],
     languages: row.languages as UserBehaviorValue[],

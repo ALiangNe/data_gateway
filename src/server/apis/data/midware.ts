@@ -21,7 +21,8 @@ export const _getBots = async (req: Request, res: Response, _next: NextFunction)
         )
     } catch (error) {
         console.error('getBots failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -44,7 +45,8 @@ export const _getKnowledge = async (req: Request, res: Response, _next: NextFunc
         )
     } catch (error) {
         console.error('getKnowledge failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -67,7 +69,8 @@ export const _getMcpCapabilities = async (req: Request, res: Response, _next: Ne
         )
     } catch (error) {
         console.error('getMcpCapabilities failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -113,7 +116,8 @@ export const _getUsers = async (req: Request, res: Response, _next: NextFunction
         )
     } catch (error) {
         console.error('getUsers failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -129,6 +133,10 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
         return
     }
+    if (!['session_id', 'device_id', 'user_id'].includes(aggregateBy)) {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_AGGREGATE_BY' })
+        return
+    }
 
     let result: DataListResult<UserBehaviorLogAggregate> = { list: [], total: 0 }
     try {
@@ -142,7 +150,8 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
         )
     } catch (error) {
         console.error('getUserBehaviorLogs failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -165,7 +174,8 @@ export const _getUserBehaviorStats = async (req: Request, res: Response, _next: 
         result = await getUserBehaviorStats_(createdAt)
     } catch (error) {
         console.error('getUserBehaviorStats failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -187,7 +197,8 @@ export const _getUserMemory = async (req: Request, res: Response, _next: NextFun
         result = await getUserMemory_(userId, soulId)
     } catch (error) {
         console.error('getUserMemory failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -212,7 +223,8 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
         )
     } catch (error) {
         console.error('getChatActiveDates failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -238,7 +250,8 @@ export const _getChatHistories = async (req: Request, res: Response, _next: Next
         )
     } catch (error) {
         console.error('getChatHistories failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -260,7 +273,8 @@ export const _getDataLookup = async (req: Request, res: Response, _next: NextFun
         result = await getDataLookup_(entity, ids)
     } catch (error) {
         console.error('getDataLookup failed: ', error)
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200], data: result })
@@ -297,7 +311,8 @@ export const _updateUserPermission = async (req: Request, res: Response, _next: 
             res.status(400).json({ errno: 400, errmsg: error.message })
             return
         }
-        throw error
+        res.status(500).json({ errno: 500, errmsg: String(error) })
+        return
     }
 
     res.status(200).json({ ...errObj[200] })

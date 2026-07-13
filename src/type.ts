@@ -39,7 +39,9 @@ export type ReadinessResult = {
 export interface Bot {
     id: string
     ownerId: string
-    platform: string
+    model: string
+    serialNumber: string
+    manufacturer: string
     status: string
     metadata: Record<string, unknown>
     registeredAt: Date | null
@@ -116,7 +118,6 @@ export interface UserBehaviorLog {
     deviceId: string
     sessionId: string
     userId: string | null
-    platform: string
     userAgent: string
     screenSize: string | null
     language: string | null
@@ -140,7 +141,6 @@ export interface UserBehaviorValueCount {
 }
 
 export interface UserBehaviorLogAggregateBase {
-    platforms: UserBehaviorValue[]
     userAgents: UserBehaviorValue[]
     screenSizes: UserBehaviorValue[]
     languages: UserBehaviorValue[]
@@ -237,6 +237,7 @@ export type DataLookupEntity =
     | 'mcpCapabilities'
     | 'media'
     | 'monitorLogs'
+    | 'souls'
     | 'users'
     | 'userBehaviorLogs'
     | 'userMemories'

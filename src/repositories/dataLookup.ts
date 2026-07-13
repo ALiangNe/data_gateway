@@ -14,6 +14,7 @@ const TABLE_MAP = {
     mcpCapabilities: 'mcp_capabilities',
     media: 'media',
     monitorLogs: 'monitor_logs',
+    souls: 'souls',
     users: 'users',
     userBehaviorLogs: 'user_behavior_logs',
     userMemories: 'user_memories',
@@ -21,7 +22,7 @@ const TABLE_MAP = {
 
 const LOOKUP_COLUMN_MAP: Partial<Record<DataLookupEntity, string>> = {
     monitorLogs: 'span_id',
-    userBehaviorLogs: 'user_id',
+    userBehaviorLogs: 'session_id',
 }
 
 /**

@@ -10,7 +10,9 @@ const BOT_TABLE = 'bots'
 const BOT_COLUMN_MAP: Record<string, string> = {
     id: 'id',
     ownerId: 'owner_id',
-    platform: 'platform',
+    model: 'model',
+    serialNumber: 'serial_number',
+    manufacturer: 'manufacturer',
     status: 'status',
     metadata: 'metadata',
     registeredAt: 'registered_at',
@@ -23,7 +25,9 @@ const toBot = (row: Record<string, unknown>): Bot => {
     return {
         id: row.id as string,
         ownerId: row.owner_id as string,
-        platform: row.platform as string,
+        model: row.model as string,
+        serialNumber: row.serial_number as string,
+        manufacturer: row.manufacturer as string,
         status: row.status as string,
         metadata: row.metadata as Bot['metadata'],
         registeredAt: row.registered_at as Date | null,
