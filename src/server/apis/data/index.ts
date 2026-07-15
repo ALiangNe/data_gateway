@@ -17,7 +17,7 @@ import {
 
 const router = Router()
 
-router.post('/getBots', roleCheck([0, 1]), _getBots)
+router.post('/getBots', roleCheck([0, 1, 2]), _getBots)
 router.post('/getKnowledge', roleCheck([0, 1, 3]), _getKnowledge)
 router.post('/getMcpCapabilities', roleCheck([0, 1]), _getMcpCapabilities)
 router.post('/getMonitorLogsTrace', roleCheck([0, 1]), _getMonitorLogsTrace)
