@@ -114,6 +114,24 @@ export interface User {
     updatedAt: Date
 }
 
+export interface Software {
+    id: string
+    type: string
+    name: string
+    version: string
+    dependencies: Record<string, string>
+    changelog: string
+    storageKey: string
+    sizeBytes: number
+    checksum: string
+    signature: string
+    status: string
+    metadata: Record<string, unknown>
+    uploadedBy: string
+    createdAt: Date
+    updatedAt: Date
+}
+
 export interface UserBehaviorLog {
     deviceId: string
     sessionId: string
@@ -238,6 +256,29 @@ export type DataLookupEntity =
     | 'media'
     | 'monitorLogs'
     | 'souls'
+    | 'software'
     | 'users'
     | 'userBehaviorLogs'
     | 'userMemories'
+
+export type S3PresignedPost = {
+    url: string
+    fields: Record<string, string>
+}
+
+export type SoftwareUploadPostParams = {
+    type: string
+    name: string
+    version: string
+    dependencies: Record<string, string>
+    changelog: string
+    fileName: string
+    mimeType: string
+    sizeBytes: number
+    checksum: string
+}
+
+export type SoftwareUploadPostResult = {
+    id: string
+    uploadPost: S3PresignedPost
+}

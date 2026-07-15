@@ -15,6 +15,7 @@ const TABLE_MAP = {
     media: 'media',
     monitorLogs: 'monitor_logs',
     souls: 'souls',
+    software: 'software',
     users: 'users',
     userBehaviorLogs: 'user_behavior_logs',
     userMemories: 'user_memories',

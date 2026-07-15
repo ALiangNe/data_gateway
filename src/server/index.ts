@@ -10,6 +10,7 @@ import { errorHandler } from './midwares/error'
 import { rateLimiteCheck } from './midwares/security'
 import healthRoute from './apis/health'
 import dataRoute from './apis/data'
+import softwareRoute from './apis/software'
 import { CORS_ORIGINS, NODE_ENV } from '../config'
 // Expose listener instance to higher level scripts
 const listener = express()
@@ -30,6 +31,7 @@ listener.use(ipCheck)
 // load APIs (routes to business logc)
 listener.use('/', healthRoute)
 listener.use('/data', rateLimiteCheck, tokenCheck, dataRoute)
+listener.use('/software', rateLimiteCheck, tokenCheck, softwareRoute)
 listener.use(errorHandler)
 
 export const startHTTPServer = (HTTP_PORT: number): Server => {

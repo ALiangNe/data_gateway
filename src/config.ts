@@ -22,6 +22,10 @@ export const CORS_ORIGINS = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.
 export const AUTH_HOST = process.env.AUTH_HOST
 export const AUTH_PORT = process.env.AUTH_PORT
 
+// OTA service
+export const OTA_SERVICE_HOST = process.env.OTA_SERVICE_HOST || ''
+export const OTA_SERVICE_PORT = process.env.OTA_SERVICE_PORT || ''
+
 // Redis configuration
 export const REDIS_HOSTS = process.env.REDIS_HOSTS ? process.env.REDIS_HOSTS.trim().split(',') : []
 export const REDIS_PORT = Number(process.env.REDIS_PORT)
