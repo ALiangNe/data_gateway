@@ -57,21 +57,27 @@ export const queryKnowledge = async (
         const col = KNOWLEDGE_COLUMN_MAP[key]
         if (!col) throw 'INVALID_QUERY_KEYS'
 
-        if (!Array.isArray(value)) {
-            conditions.push(`${col} = $${values.length + 1}`)
-            values.push(value)
+        if (Array.isArray(value)) {
+            const [start, end] = value as [unknown?, unknown?]
+            if (start != null && start !== '') {
+                conditions.push(`${col} >= $${values.length + 1}`)
+                values.push(start)
+            }
+            if (end != null && end !== '') {
+                conditions.push(`${col} <= $${values.length + 1}`)
+                values.push(end)
+            }
             continue
         }
 
-        const [start, end] = value as [unknown?, unknown?]
-        if (start != null && start !== '') {
-            conditions.push(`${col} >= $${values.length + 1}`)
-            values.push(start)
+        if (key === 'document') {
+            conditions.push(`${col} ILIKE $${values.length + 1}`)
+            values.push(`%${value}%`)
+            continue
         }
-        if (end != null && end !== '') {
-            conditions.push(`${col} <= $${values.length + 1}`)
-            values.push(end)
-        }
+
+        conditions.push(`${col} = $${values.length + 1}`)
+        values.push(value)
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
