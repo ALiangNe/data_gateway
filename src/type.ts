@@ -261,11 +261,6 @@ export type DataLookupEntity =
     | 'userBehaviorLogs'
     | 'userMemories'
 
-export type S3PresignedPost = {
-    url: string
-    fields: Record<string, string>
-}
-
 export type SoftwareUploadPostParams = {
     type: string
     name: string
@@ -280,5 +275,8 @@ export type SoftwareUploadPostParams = {
 
 export type SoftwareUploadPostResult = {
     id: string
-    uploadPost: S3PresignedPost
+    uploadPost: {
+        url: string
+        fields: Record<string, string>
+    }
 }
