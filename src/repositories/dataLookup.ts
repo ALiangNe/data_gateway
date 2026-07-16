@@ -1,8 +1,8 @@
 /**
  * Data lookup repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { DataLookupEntity } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { DataLookupEntity, DataRegion } from '../type'
 import type { QueryResult } from 'pg'
 
 const TABLE_MAP = {
@@ -33,10 +33,12 @@ const LOOKUP_COLUMN_MAP: Partial<Record<DataLookupEntity, string>> = {
  * @returns raw database rows
  */
 export const lookupData = async (
+    region: DataRegion,
     entity: string,
     ids: string[],
 ): Promise<Record<string, unknown>[]> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
     if (!(entity in TABLE_MAP)) throw 'INVALID_ENTITY'
     if (ids.length === 0) return []
 
@@ -49,7 +51,7 @@ export const lookupData = async (
 
     let res: QueryResult<Record<string, unknown>>
     try {
-        res = await pgClient.query(sql, [ids])
+        res = await client.query(sql, [ids])
     } catch (error) {
         throw parseError(error)
     }

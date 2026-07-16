@@ -1,39 +1,64 @@
 /**
  * PostgreSQL module
  */
-import { Pool, QueryResultRow } from 'pg'
-import type { PgCredential } from '../type'
+import { Pool, type PoolClient } from 'pg'
+import type { DataRegion, PgCredential } from '../type'
 import { POSTGRES_ERRORS } from '../errors/postgres'
-/**
- * PostgreSQL client instance
- */
-export let pgClient: Pool
+
+export let pgClients: Partial<Record<DataRegion, Pool>> = {}
 
 /**
- * Initialize PostgreSQL client
- * @param config PostgreSQL configuration
+ * Initialize PostgreSQL clients for data regions
+ * @param configs PostgreSQL configurations by region
  */
-export const initPgClient = async (config: PgCredential) => {
-    const { PG_HOST, PG_PORT, PG_USERNAME, PG_PASSWORD, PG_DATABASE, PG_MAX_CONNECTIONS, PG_USE_TLS } = config
-    if (!PG_HOST || !PG_PORT || !PG_USERNAME || !PG_PASSWORD || !PG_DATABASE) throw 'INVALID_POSTGRES_CREDENTIALS'
+export const initPgClients = async (configs: Record<DataRegion, PgCredential>) => {
+    const usw1Config = configs.usw1
+    const euc1Config = configs.euc1
+    if (!usw1Config.PG_HOST || !usw1Config.PG_PORT || !usw1Config.PG_USERNAME || !usw1Config.PG_PASSWORD || !usw1Config.PG_DATABASE) throw 'INVALID_POSTGRES_CREDENTIALS'
+    if (!euc1Config.PG_HOST || !euc1Config.PG_PORT || !euc1Config.PG_USERNAME || !euc1Config.PG_PASSWORD || !euc1Config.PG_DATABASE) throw 'INVALID_POSTGRES_CREDENTIALS'
 
-    pgClient = new Pool({
-        host: PG_HOST,
-        port: PG_PORT,
-        user: PG_USERNAME,
-        password: PG_PASSWORD,
-        database: PG_DATABASE,
-        max: PG_MAX_CONNECTIONS,
+    const usw1Client = new Pool({
+        host: usw1Config.PG_HOST,
+        port: usw1Config.PG_PORT,
+        user: usw1Config.PG_USERNAME,
+        password: usw1Config.PG_PASSWORD,
+        database: usw1Config.PG_DATABASE,
+        max: usw1Config.PG_MAX_CONNECTIONS,
         connectionTimeoutMillis: 5000,
-        ssl: PG_USE_TLS ? { rejectUnauthorized: false } : false,
+        ssl: usw1Config.PG_USE_TLS ? { rejectUnauthorized: false } : false,
+    })
+    const euc1Client = new Pool({
+        host: euc1Config.PG_HOST,
+        port: euc1Config.PG_PORT,
+        user: euc1Config.PG_USERNAME,
+        password: euc1Config.PG_PASSWORD,
+        database: euc1Config.PG_DATABASE,
+        max: euc1Config.PG_MAX_CONNECTIONS,
+        connectionTimeoutMillis: 5000,
+        ssl: euc1Config.PG_USE_TLS ? { rejectUnauthorized: false } : false,
     })
 
+    let usw1Connection: PoolClient | null = null
     try {
-        const client = await pgClient.connect()
-        client.release()
+        usw1Connection = await usw1Client.connect()
     } catch (e) {
-        console.error('Failed connect PostgreSQL', e)
+        console.error('Failed connect PostgreSQL usw1', e)
         throw 'FAILED_CONNECT_PG_CLIENT'
+    }
+    if (usw1Connection) usw1Connection.release()
+
+    let euc1Connection: PoolClient | null = null
+    try {
+        euc1Connection = await euc1Client.connect()
+    } catch (e) {
+        console.error('Failed connect PostgreSQL euc1', e)
+        throw 'FAILED_CONNECT_PG_CLIENT'
+    }
+    if (euc1Connection) euc1Connection.release()
+
+    pgClients = {
+        usw1: usw1Client,
+        euc1: euc1Client,
     }
 }
 
@@ -42,13 +67,15 @@ export const initPgClient = async (config: PgCredential) => {
  * @returns 1 on success, 0 if not initialized
  */
 export const disconnectPgClient = async (): Promise<number> => {
-    if (!pgClient) return 0
+    const clients = Object.values(pgClients)
+    if (clients.length === 0) return 0
     try {
-        await pgClient.end()
+        await Promise.all(clients.map((client) => client.end()))
     } catch (e) {
         console.error('Failed disconnect PostgreSQL client', e)
         throw 'FAILED_DISCONNECT_PG_CLIENT'
     }
+    pgClients = {}
     return 1
 }
 
@@ -61,37 +88,4 @@ export const parseError = (error: unknown) => {
         return POSTGRES_ERRORS[error.code as keyof typeof POSTGRES_ERRORS] || 'UNKNOWN_POSTGRES_ERROR'
     }
     throw 'FAILED_PARSE_ERROR'
-}
-
-/**
- * Remote query
- * @param sql query
- * @param remoteSqls remote queries
- * @param values values
- * @returns result of the query
- */
-export const remoteQuery = async <T extends QueryResultRow>(sql: string, remoteSqls: string[], values: unknown[]): Promise<T[]> => {
-    if (!pgClient) throw 'PG_CLIENT_NOT_READY'
-
-    const res = await pgClient.query<T>(sql, values)
-    if (res.rows.length > 0 || remoteSqls.length === 0) return res.rows
-
-    try {
-        return await Promise.any(remoteSqls.map(async (remoteSql) => {
-            const client = await pgClient.connect()
-            try {
-                const currentRes = await client.query<T>(remoteSql, values)
-                if (currentRes.rows.length === 0) throw new Error('NO_RESULT_FOUND')
-                return currentRes.rows
-            } finally {
-                client.release()
-            }
-        }))
-    } catch (error) {
-        if (error instanceof AggregateError) {
-            if (error.errors.every(e => e instanceof Error && e.message === 'NO_RESULT_FOUND')) return []
-            throw error.errors[0]
-        }
-        throw error
-    }
 }

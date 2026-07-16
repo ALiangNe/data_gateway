@@ -1,8 +1,8 @@
 /**
  * User repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { DataListResult, User } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { DataListResult, DataRegion, User } from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_TABLE = 'users'
@@ -45,13 +45,15 @@ const toUser = (row: Record<string, unknown>): User => {
  * @returns user list and total count
  */
 export const queryUsers = async (
+    region: DataRegion,
     filters: Record<string, unknown> = {},
     page?: number,
     pageSize?: number,
     sortBy: string = 'createdAt',
     order: 'asc' | 'desc' = 'desc',
 ): Promise<DataListResult<User>> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const paginated = page != null && pageSize != null
     if (paginated) {
@@ -122,8 +124,8 @@ export const queryUsers = async (
     let res: QueryResult<Record<string, unknown>>
     try {
         [countRes, res] = await Promise.all([
-            pgClient.query(countSql, values),
-            pgClient.query(sql, queryValues),
+            client.query(countSql, values),
+            client.query(sql, queryValues),
         ])
     } catch (error) {
         throw parseError(error)
@@ -141,10 +143,12 @@ export const queryUsers = async (
  * @param role new role
  */
 export const updateUserPermission = async (
+    region: DataRegion,
     userId: string,
     role: number,
 ): Promise<void> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const sql = `
         UPDATE ${USER_TABLE}
@@ -153,7 +157,7 @@ export const updateUserPermission = async (
     `
 
     try {
-        await pgClient.query(sql, [role, userId])
+        await client.query(sql, [role, userId])
     } catch (error) {
         throw parseError(error)
     }

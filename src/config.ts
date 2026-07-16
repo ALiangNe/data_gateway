@@ -23,8 +23,10 @@ export const AUTH_HOST = process.env.AUTH_HOST
 export const AUTH_PORT = process.env.AUTH_PORT
 
 // OTA service
-export const OTA_SERVICE_HOST = process.env.OTA_SERVICE_HOST || ''
-export const OTA_SERVICE_PORT = process.env.OTA_SERVICE_PORT || ''
+export const OTA_USW1_HOST = process.env.OTA_USW1_HOST || ''
+export const OTA_USW1_PORT = process.env.OTA_USW1_PORT || ''
+export const OTA_EUC1_HOST = process.env.OTA_EUC1_HOST || ''
+export const OTA_EUC1_PORT = process.env.OTA_EUC1_PORT || ''
 
 // Redis configuration
 export const REDIS_HOSTS = process.env.REDIS_HOSTS ? process.env.REDIS_HOSTS.trim().split(',') : []
@@ -36,14 +38,21 @@ export const REDIS_STREAM_READ_COUNT = Number(process.env.REDIS_STREAM_READ_COUN
 // Redis Stream Config
 export const REDIS_STREAMS_LISTEN = process.env.REDIS_STREAMS_LISTEN ? process.env.REDIS_STREAMS_LISTEN.split(',') : []
 
-// PostgreSQL configuration (optional)
-export const PG_HOST = process.env.PG_HOST || ''
-export const PG_PORT = Number(process.env.PG_PORT || '')
-export const PG_USERNAME = process.env.PG_USERNAME || ''
-export const PG_PASSWORD = process.env.PG_PASSWORD || ''
-export const PG_DATABASE = process.env.PG_DATABASE || ''
-export const PG_MAX_CONNECTIONS = Number(process.env.PG_MAX_CONNECTIONS) ?? 10
-export const PG_USE_TLS = process.env.PG_USE_TLS === 'true'
+// PostgreSQL configuration
+export const PG_USW1_HOST = process.env.PG_USW1_HOST || ''
+export const PG_USW1_PORT = Number(process.env.PG_USW1_PORT || '')
+export const PG_USW1_USERNAME = process.env.PG_USW1_USERNAME || ''
+export const PG_USW1_PASSWORD = process.env.PG_USW1_PASSWORD || ''
+export const PG_USW1_DATABASE = process.env.PG_USW1_DATABASE || ''
+export const PG_USW1_MAX_CONNECTIONS = Number(process.env.PG_USW1_MAX_CONNECTIONS || 10)
+export const PG_USW1_USE_TLS = process.env.PG_USW1_USE_TLS === 'true'
+export const PG_EUC1_HOST = process.env.PG_EUC1_HOST || ''
+export const PG_EUC1_PORT = Number(process.env.PG_EUC1_PORT || '')
+export const PG_EUC1_USERNAME = process.env.PG_EUC1_USERNAME || ''
+export const PG_EUC1_PASSWORD = process.env.PG_EUC1_PASSWORD || ''
+export const PG_EUC1_DATABASE = process.env.PG_EUC1_DATABASE || ''
+export const PG_EUC1_MAX_CONNECTIONS = Number(process.env.PG_EUC1_MAX_CONNECTIONS || 10)
+export const PG_EUC1_USE_TLS = process.env.PG_EUC1_USE_TLS === 'true'
 
 // Platform list
 export const PLATFORM_LIST = process.env.PLATFORM_LIST ? process.env.PLATFORM_LIST.split(',') : []

@@ -1,7 +1,8 @@
 /**
  * User memory repository
  */
-import { pgClient, parseError } from '../modules/pg'
+import { parseError, pgClients } from '../modules/pg'
+import type { DataRegion } from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_MEMORY_TABLE = 'user_memories'
@@ -12,8 +13,9 @@ const USER_MEMORY_TABLE = 'user_memories'
  * @param soulId soul id
  * @returns memory text
  */
-export const queryUserMemory = async (userId: string, soulId: string): Promise<string> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+export const queryUserMemory = async (region: DataRegion, userId: string, soulId: string): Promise<string> => {
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const sql = `
         SELECT memory
@@ -24,7 +26,7 @@ export const queryUserMemory = async (userId: string, soulId: string): Promise<s
 
     let res: QueryResult<{ memory: string }>
     try {
-        res = await pgClient.query(sql, [userId, soulId])
+        res = await client.query(sql, [userId, soulId])
     } catch (error) {
         throw parseError(error)
     }

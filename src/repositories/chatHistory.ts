@@ -1,8 +1,8 @@
 /**
  * Chat history repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { ChatHistory } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { ChatHistory, DataRegion } from '../type'
 import type { QueryResult } from 'pg'
 
 const CHAT_HISTORY_TABLE = 'chat_histories'
@@ -30,11 +30,13 @@ const toChatHistory = (row: Record<string, unknown>): ChatHistory => {
  * @returns distinct local dates in YYYY-MM-DD format
  */
 export const queryChatActiveDates = async (
+    region: DataRegion,
     userId: string,
     startUtc: string,
     endUtc: string,
 ): Promise<string[]> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const sql = `
         SELECT DISTINCT TO_CHAR(created_at AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD') AS date
@@ -47,7 +49,7 @@ export const queryChatActiveDates = async (
 
     let res: QueryResult<{ date: string }>
     try {
-        res = await pgClient.query(sql, [userId, startUtc, endUtc])
+        res = await client.query(sql, [userId, startUtc, endUtc])
     } catch (error) {
         throw parseError(error)
     }
@@ -64,12 +66,14 @@ export const queryChatActiveDates = async (
  * @returns chat history list
  */
 export const queryChatHistories = async (
+    region: DataRegion,
     userId: string,
     soulId: string,
     startUtc: string,
     endUtc: string,
 ): Promise<ChatHistory[]> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const sql = `
         SELECT id, role, content, created_at
@@ -83,7 +87,7 @@ export const queryChatHistories = async (
 
     let res: QueryResult<{ id: string; role: string; content: string; created_at: Date }>
     try {
-        res = await pgClient.query(sql, [userId, soulId, startUtc, endUtc])
+        res = await client.query(sql, [userId, soulId, startUtc, endUtc])
     } catch (error) {
         throw parseError(error)
     }

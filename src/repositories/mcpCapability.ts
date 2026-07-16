@@ -1,8 +1,8 @@
 /**
  * MCP capability repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { DataListResult, McpCapability } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { DataListResult, DataRegion, McpCapability } from '../type'
 import type { QueryResult } from 'pg'
 
 const MCP_CAPABILITY_TABLE = 'mcp_capabilities'
@@ -36,13 +36,15 @@ const toMcpCapability = (row: Record<string, unknown>): McpCapability => {
  * @returns MCP capability list and total count
  */
 export const queryMcpCapabilities = async (
+    region: DataRegion,
     filters: Record<string, unknown> = {},
     page: number = 1,
     pageSize: number = 20,
     sortBy: string = 'createdAt',
     order: 'asc' | 'desc' = 'desc',
 ): Promise<DataListResult<McpCapability>> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
     if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
@@ -99,8 +101,8 @@ export const queryMcpCapabilities = async (
     let res: QueryResult<Record<string, unknown>>
     try {
         [countRes, res] = await Promise.all([
-            pgClient.query(countSql, values.slice(0, values.length - 2)),
-            pgClient.query(sql, values),
+            client.query(countSql, values.slice(0, values.length - 2)),
+            client.query(sql, values),
         ])
     } catch (error) {
         throw parseError(error)

@@ -24,6 +24,8 @@ export interface PgCredential {
     PG_USE_TLS?: boolean
 }
 
+export type DataRegion = 'usw1' | 'euc1'
+
 // Health
 export type ReadinessStatus = 'UP' | 'DOWN'
 

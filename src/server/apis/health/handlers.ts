@@ -1,5 +1,5 @@
 import { redisClient } from '../../../modules/cache'
-import { pgClient } from '../../../modules/pg'
+import { pgClients } from '../../../modules/pg'
 import type { ReadinessResult } from '../../../type'
 
 /**
@@ -31,8 +31,11 @@ export const ready_ = async (): Promise<ReadinessResult> => {
     }
 
     try {
-        if (!pgClient) throw new Error('PG_NOT_READY')
-        await pgClient.query('SELECT 1')
+        if (!pgClients['usw1'] || !pgClients['euc1']) throw new Error('PG_NOT_READY')
+        await Promise.all([
+            pgClients['usw1'].query('SELECT 1'),
+            pgClients['euc1'].query('SELECT 1'),
+        ])
         result.checks.pg = 'UP'
     } catch {
         result.checks.pg = 'DOWN'

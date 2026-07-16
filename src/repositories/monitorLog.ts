@@ -1,8 +1,8 @@
 /**
  * Monitor log repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { MonitorSpan, MonitorTraceDetail } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { DataRegion, MonitorSpan, MonitorTraceDetail } from '../type'
 import type { QueryResult } from 'pg'
 
 const MONITOR_LOG_TABLE = 'monitor_logs'
@@ -12,8 +12,9 @@ const MONITOR_LOG_TABLE = 'monitor_logs'
  * @param traceId trace id
  * @returns monitor trace detail
  */
-export const queryMonitorLogsTrace = async (traceId: string): Promise<MonitorTraceDetail | null> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+export const queryMonitorLogsTrace = async (region: DataRegion, traceId: string): Promise<MonitorTraceDetail | null> => {
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const spansSql = `
         SELECT
@@ -35,7 +36,7 @@ export const queryMonitorLogsTrace = async (traceId: string): Promise<MonitorTra
 
     let spansRes: QueryResult<Record<string, unknown>>
     try {
-        spansRes = await pgClient.query(spansSql, [traceId])
+        spansRes = await client.query(spansSql, [traceId])
     } catch (error) {
         throw parseError(error)
     }

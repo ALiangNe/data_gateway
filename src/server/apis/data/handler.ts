@@ -8,7 +8,7 @@ import { queryUsers, updateUserPermission } from '../../../repositories/user'
 import { queryUserBehaviorLogs, queryUserBehaviorStats } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, DataLookupEntity, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorStatsQueryResult, UserBehaviorStatsResult } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, DataLookupEntity, DataRegion, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorStatsQueryResult, UserBehaviorStatsResult } from '../../../type'
 
 /**
  * Get bots handler.
@@ -20,6 +20,7 @@ import type { Bot, ChatHistory, DataListResult, DataLookupEntity, Knowledge, Mcp
  * @returns paginated bot list
  */
 export const getBots_ = async (
+    region: DataRegion,
     filters: Record<string, unknown>,
     page: number,
     pageSize: number,
@@ -28,6 +29,7 @@ export const getBots_ = async (
 ): Promise<DataListResult<Bot>> => {
     try {
         return await queryBots(
+            region,
             filters,
             page,
             pageSize,
@@ -50,6 +52,7 @@ export const getBots_ = async (
  * @returns paginated knowledge list
  */
 export const getKnowledge_ = async (
+    region: DataRegion,
     filters: Record<string, unknown>,
     page: number,
     pageSize: number,
@@ -58,6 +61,7 @@ export const getKnowledge_ = async (
 ): Promise<DataListResult<Knowledge>> => {
     try {
         return await queryKnowledge(
+            region,
             filters,
             page,
             pageSize,
@@ -80,6 +84,7 @@ export const getKnowledge_ = async (
  * @returns paginated MCP capability list
  */
 export const getMcpCapabilities_ = async (
+    region: DataRegion,
     filters: Record<string, unknown>,
     page: number,
     pageSize: number,
@@ -88,6 +93,7 @@ export const getMcpCapabilities_ = async (
 ): Promise<DataListResult<McpCapability>> => {
     try {
         return await queryMcpCapabilities(
+            region,
             filters,
             page,
             pageSize,
@@ -105,9 +111,9 @@ export const getMcpCapabilities_ = async (
  * @param traceId - trace id
  * @returns monitor trace detail
  */
-export const getMonitorLogsTrace_ = async (traceId: string): Promise<MonitorTraceDetail | null> => {
+export const getMonitorLogsTrace_ = async (region: DataRegion, traceId: string): Promise<MonitorTraceDetail | null> => {
     try {
-        return await queryMonitorLogsTrace(traceId)
+        return await queryMonitorLogsTrace(region, traceId)
     } catch (error) {
         console.error('get monitor logs trace failed: ', error)
         throw error
@@ -124,6 +130,7 @@ export const getMonitorLogsTrace_ = async (traceId: string): Promise<MonitorTrac
  * @returns paginated user list
  */
 export const getUsers_ = async (
+    region: DataRegion,
     filters: Record<string, unknown>,
     page: number | undefined,
     pageSize: number | undefined,
@@ -132,6 +139,7 @@ export const getUsers_ = async (
 ): Promise<DataListResult<User>> => {
     try {
         const { list, total } = await queryUsers(
+            region,
             filters,
             page,
             pageSize,
@@ -160,6 +168,7 @@ export const getUsers_ = async (
  * @returns paginated aggregated user behavior log list
  */
 export const getUserBehaviorLogs_ = async (
+    region: DataRegion,
     aggregateBy: UserBehaviorLogAggregateBy,
     userId: string = '',
     createdAt: [string?, string?] | undefined,
@@ -171,6 +180,7 @@ export const getUserBehaviorLogs_ = async (
 
     try {
         result = await queryUserBehaviorLogs(
+            region,
             aggregateBy,
             userId,
             createdAt,
@@ -247,12 +257,13 @@ export const getUserBehaviorLogs_ = async (
  * @returns user behavior stats
  */
 export const getUserBehaviorStats_ = async (
+    region: DataRegion,
     createdAt: [string?, string?] | undefined,
 ): Promise<UserBehaviorStatsResult> => {
     let result: UserBehaviorStatsQueryResult
 
     try {
-        result = await queryUserBehaviorStats(createdAt)
+        result = await queryUserBehaviorStats(region, createdAt)
     } catch (error) {
         console.error('get user behavior stats failed: ', error)
         throw error
@@ -288,9 +299,9 @@ export const getUserBehaviorStats_ = async (
  * @param soulId soul id
  * @returns memory text
  */
-export const getUserMemory_ = async (userId: string, soulId: string): Promise<string> => {
+export const getUserMemory_ = async (region: DataRegion, userId: string, soulId: string): Promise<string> => {
     try {
-        return await queryUserMemory(userId, soulId)
+        return await queryUserMemory(region, userId, soulId)
     } catch (error) {
         console.error('get user memory failed: ', error)
         throw error
@@ -304,6 +315,7 @@ export const getUserMemory_ = async (userId: string, soulId: string): Promise<st
  * @returns distinct local dates in YYYY-MM-DD format
  */
 export const getChatActiveDates_ = async (
+    region: DataRegion,
     userId: string,
     currentTime: string,
 ): Promise<string[]> => {
@@ -320,7 +332,7 @@ export const getChatActiveDates_ = async (
     const endUtc = end.toISOString()
 
     try {
-        return await queryChatActiveDates(userId, startUtc, endUtc)
+        return await queryChatActiveDates(region, userId, startUtc, endUtc)
     } catch (error) {
         console.error('get chat active dates failed: ', error)
         throw error
@@ -335,6 +347,7 @@ export const getChatActiveDates_ = async (
  * @returns chat history list for the day
  */
 export const getChatHistories_ = async (
+    region: DataRegion,
     userId: string,
     soulId: string,
     date: string,
@@ -347,7 +360,7 @@ export const getChatHistories_ = async (
     const endUtc = end.toISOString()
 
     try {
-        return await queryChatHistories(userId, soulId, startUtc, endUtc)
+        return await queryChatHistories(region, userId, soulId, startUtc, endUtc)
     } catch (error) {
         console.error('get chat histories failed:', error)
         throw error
@@ -361,11 +374,12 @@ export const getChatHistories_ = async (
  * @returns raw database rows
  */
 export const getDataLookup_ = async (
+    region: DataRegion,
     entity: DataLookupEntity,
     ids: string[],
 ): Promise<Record<string, unknown>[]> => {
     try {
-        return await lookupData(entity, ids)
+        return await lookupData(region, entity, ids)
     } catch (error) {
         console.error('get data lookup failed: ', error)
         throw error
@@ -380,6 +394,7 @@ export const getDataLookup_ = async (
  * @returns updated user id and role
  */
 export const updateUserPermission_ = async (
+    region: DataRegion,
     userId: string,
     role: number,
     editedBy: string,
@@ -388,7 +403,7 @@ export const updateUserPermission_ = async (
 
     let rows: Record<string, unknown>[]
     try {
-        rows = await lookupData('users', [editedBy, userId])
+        rows = await lookupData(region, 'users', [editedBy, userId])
     } catch (error) {
         console.error('lookup user permission rows failed: ', error)
         throw error
@@ -404,7 +419,7 @@ export const updateUserPermission_ = async (
     if (role <= editorRole) throw new Error('FORBIDDEN_UPDATE_PERMISSION')
 
     try {
-        await updateUserPermission(userId, role)
+        await updateUserPermission(region, userId, role)
     } catch (error) {
         console.error('update user permission failed: ', error)
         throw error

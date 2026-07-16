@@ -1,8 +1,8 @@
 /**
  * Bot repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { Bot, DataListResult } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { Bot, DataListResult, DataRegion } from '../type'
 import type { QueryResult } from 'pg'
 
 const BOT_TABLE = 'bots'
@@ -47,13 +47,15 @@ const toBot = (row: Record<string, unknown>): Bot => {
  * @returns bot list and total count
  */
 export const queryBots = async (
+    region: DataRegion,
     filters: Record<string, unknown> = {},
     page: number = 1,
     pageSize: number = 20,
     sortBy: string = 'createdAt',
     order: 'asc' | 'desc' = 'desc',
 ): Promise<DataListResult<Bot>> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
     if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
@@ -104,8 +106,8 @@ export const queryBots = async (
     let res: QueryResult<Record<string, unknown>>
     try {
         [countRes, res] = await Promise.all([
-            pgClient.query(countSql, values.slice(0, values.length - 2)),
-            pgClient.query(sql, values),
+            client.query(countSql, values.slice(0, values.length - 2)),
+            client.query(sql, values),
         ])
     } catch (error) {
         throw parseError(error)

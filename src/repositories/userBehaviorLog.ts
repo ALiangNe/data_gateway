@@ -1,8 +1,8 @@
 /**
  * User behavior log repository
  */
-import { pgClient, parseError } from '../modules/pg'
-import type { AggregateConfig, DataListResult, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorLogDeviceAggregate, UserBehaviorLogSessionAggregate, UserBehaviorLogUserAggregate, UserBehaviorStatsQueryResult, UserBehaviorValue, UserBehaviorValueCount } from '../type'
+import { parseError, pgClients } from '../modules/pg'
+import type { AggregateConfig, DataListResult, DataRegion, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorLogDeviceAggregate, UserBehaviorLogSessionAggregate, UserBehaviorLogUserAggregate, UserBehaviorStatsQueryResult, UserBehaviorValue, UserBehaviorValueCount } from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_BEHAVIOR_LOG_TABLE = 'user_behavior_logs'
@@ -110,6 +110,7 @@ const AGGREGATE_CONFIG: Record<UserBehaviorLogAggregateBy, AggregateConfig> = {
  * @returns aggregated user behavior logs
  */
 export const queryUserBehaviorLogs = async (
+    region: DataRegion,
     aggregateBy: UserBehaviorLogAggregateBy,
     userId: string = '',
     createdAt: [string?, string?] | undefined,
@@ -117,7 +118,8 @@ export const queryUserBehaviorLogs = async (
     pageSize: number = 20,
     order: 'asc' | 'desc' = 'desc',
 ): Promise<DataListResult<UserBehaviorLogAggregate>> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const config = AGGREGATE_CONFIG[aggregateBy]
     if (!config) throw 'INVALID_AGGREGATE_BY'
@@ -256,8 +258,8 @@ export const queryUserBehaviorLogs = async (
 
     try {
         [countRes, listRes] = await Promise.all([
-            pgClient.query<{ total: number }>(countSql, values.slice(0, values.length - 2)),
-            pgClient.query<Record<string, unknown>>(listSql, values),
+            client.query<{ total: number }>(countSql, values.slice(0, values.length - 2)),
+            client.query<Record<string, unknown>>(listSql, values),
         ])
     } catch (error) {
         throw parseError(error)
@@ -275,9 +277,11 @@ export const queryUserBehaviorLogs = async (
  * @returns user behavior stats
  */
 export const queryUserBehaviorStats = async (
+    region: DataRegion,
     createdAt?: [string?, string?],
 ): Promise<UserBehaviorStatsQueryResult> => {
-    if (!pgClient) throw 'POSTGRES_NOT_READY'
+    const client = pgClients[region]
+    if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const totalsSql = `
         SELECT
@@ -342,10 +346,10 @@ export const queryUserBehaviorStats = async (
 
     try {
         [totalsRes, sessionsRes, clientIpsRes, mediaClickEventsRes] = await Promise.all([
-            pgClient.query(totalsSql),
-            pgClient.query(sessionsSql, values),
-            pgClient.query(clientIpsSql, values),
-            pgClient.query(mediaClickEventsSql, values),
+            client.query(totalsSql),
+            client.query(sessionsSql, values),
+            client.query(clientIpsSql, values),
+            client.query(mediaClickEventsSql, values),
         ])
     } catch (error) {
         throw parseError(error)

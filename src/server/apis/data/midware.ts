@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express'
-import type { Bot, ChatHistory, DataListResult, Knowledge, McpCapability, MonitorTraceDetail, User } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, DataRegion, Knowledge, McpCapability, MonitorTraceDetail, User } from '../../../type'
 import { getBots_, getChatActiveDates_, getChatHistories_, getDataLookup_, getKnowledge_, getMcpCapabilities_, getMonitorLogsTrace_, getUsers_, getUserBehaviorLogs_, getUserBehaviorStats_, getUserMemory_, updateUserPermission_ } from './handler'
 import type { UserBehaviorLogAggregate, UserBehaviorStatsResult } from '../../../type'
 import { errObj } from '../../modules/errs'
@@ -8,11 +8,16 @@ import { errObj } from '../../modules/errs'
  * getBots middleware.
  */
 export const _getBots = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+    const { region, page, pageSize, sortBy, order, ...filters } = req.body
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
+        return
+    }
 
     let result: DataListResult<Bot> = { list: [], total: 0 }
     try {
         result = await getBots_(
+            region,
             filters,
             page,
             pageSize,
@@ -32,11 +37,16 @@ export const _getBots = async (req: Request, res: Response, _next: NextFunction)
  * getKnowledge middleware.
  */
 export const _getKnowledge = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+    const { region, page, pageSize, sortBy, order, ...filters } = req.body
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
+        return
+    }
 
     let result: DataListResult<Knowledge> = { list: [], total: 0 }
     try {
         result = await getKnowledge_(
+            region,
             filters,
             page,
             pageSize,
@@ -56,11 +66,16 @@ export const _getKnowledge = async (req: Request, res: Response, _next: NextFunc
  * getMcpCapabilities middleware.
  */
 export const _getMcpCapabilities = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+    const { region, page, pageSize, sortBy, order, ...filters } = req.body
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
+        return
+    }
 
     let result: DataListResult<McpCapability> = { list: [], total: 0 }
     try {
         result = await getMcpCapabilities_(
+            region,
             filters,
             page,
             pageSize,
@@ -80,16 +95,20 @@ export const _getMcpCapabilities = async (req: Request, res: Response, _next: Ne
  * getMonitorLogsTrace middleware.
  */
 export const _getMonitorLogsTrace = async (req: Request, res: Response, _next: NextFunction) => {
-    const { traceId } = req.body
+    const { region, traceId } = req.body
 
-    if (!traceId) {
+    if (!traceId || !region) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
 
     let result: MonitorTraceDetail | null = null
     try {
-        result = await getMonitorLogsTrace_(traceId)
+        result = await getMonitorLogsTrace_(region, traceId)
     } catch (error) {
         console.error('getMonitorLogsTrace failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })
@@ -103,11 +122,16 @@ export const _getMonitorLogsTrace = async (req: Request, res: Response, _next: N
  * getUsers middleware.
  */
 export const _getUsers = async (req: Request, res: Response, _next: NextFunction) => {
-    const { page, pageSize, sortBy, order, ...filters } = req.body
+    const { region, page, pageSize, sortBy, order, ...filters } = req.body
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
+        return
+    }
 
     let result: DataListResult<User> = { list: [], total: 0 }
     try {
         result = await getUsers_(
+            region,
             filters,
             page,
             pageSize,
@@ -127,10 +151,14 @@ export const _getUsers = async (req: Request, res: Response, _next: NextFunction
  * getUserBehaviorLogs middleware.
  */
 export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: NextFunction) => {
-    const { aggregateBy, userId, createdAt, page, pageSize, order } = req.body
+    const { region, aggregateBy, userId, createdAt, page, pageSize, order } = req.body
 
-    if (!aggregateBy) {
+    if (!region || !aggregateBy) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
     if (!['session_id', 'device_id', 'user_id'].includes(aggregateBy)) {
@@ -141,6 +169,7 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
     let result: DataListResult<UserBehaviorLogAggregate> = { list: [], total: 0 }
     try {
         result = await getUserBehaviorLogs_(
+            region,
             aggregateBy,
             userId,
             createdAt,
@@ -161,7 +190,11 @@ export const _getUserBehaviorLogs = async (req: Request, res: Response, _next: N
  * getUserBehaviorStats middleware.
  */
 export const _getUserBehaviorStats = async (req: Request, res: Response, _next: NextFunction) => {
-    const { createdAt } = req.body
+    const { region, createdAt } = req.body
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
+        return
+    }
 
     let result: UserBehaviorStatsResult = {
         deviceCount: 0,
@@ -171,7 +204,7 @@ export const _getUserBehaviorStats = async (req: Request, res: Response, _next: 
         mediaClickEvents: [],
     }
     try {
-        result = await getUserBehaviorStats_(createdAt)
+        result = await getUserBehaviorStats_(region, createdAt)
     } catch (error) {
         console.error('getUserBehaviorStats failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })
@@ -185,16 +218,20 @@ export const _getUserBehaviorStats = async (req: Request, res: Response, _next: 
  * getUserMemory middleware.
  */
 export const _getUserMemory = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId, soulId } = req.body
+    const { region, userId, soulId } = req.body
 
-    if (!userId || !soulId) {
+    if (!region || !userId || !soulId) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
 
     let result = ''
     try {
-        result = await getUserMemory_(userId, soulId)
+        result = await getUserMemory_(region, userId, soulId)
     } catch (error) {
         console.error('getUserMemory failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })
@@ -208,16 +245,21 @@ export const _getUserMemory = async (req: Request, res: Response, _next: NextFun
  * getChatActiveDates middleware.
  */
 export const _getChatActiveDates = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId, currentTime } = req.body
+    const { region, userId, currentTime } = req.body
 
-    if (!userId || !currentTime) {
+    if (!region || !userId || !currentTime) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
 
     let result: string[] = []
     try {
         result = await getChatActiveDates_(
+            region,
             userId,
             currentTime,
         )
@@ -234,16 +276,21 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
  * getChatHistories middleware.
  */
 export const _getChatHistories = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId, soulId, date } = req.body
+    const { region, userId, soulId, date } = req.body
 
-    if (!userId || !soulId || !date) {
+    if (!region || !userId || !soulId || !date) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
 
     let result: ChatHistory[] = []
     try {
         result = await getChatHistories_(
+            region,
             userId,
             soulId,
             date,
@@ -261,16 +308,20 @@ export const _getChatHistories = async (req: Request, res: Response, _next: Next
  * getDataLookup middleware.
  */
 export const _getDataLookup = async (req: Request, res: Response, _next: NextFunction) => {
-    const { entity, ids } = req.body
+    const { region, entity, ids } = req.body
 
-    if (!entity || !Array.isArray(ids) || ids.length === 0) {
+    if (!region || !entity || !Array.isArray(ids) || ids.length === 0) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
 
     let result: Record<string, unknown>[] = []
     try {
-        result = await getDataLookup_(entity, ids)
+        result = await getDataLookup_(region, entity, ids)
     } catch (error) {
         console.error('getDataLookup failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })
@@ -284,10 +335,14 @@ export const _getDataLookup = async (req: Request, res: Response, _next: NextFun
  * updateUserPermission middleware.
  */
 export const _updateUserPermission = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId, role } = req.body
+    const { region, userId, role } = req.body
 
-    if (!userId || role == null) {
+    if (!region || !userId || role == null) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
+        return
+    }
+    if (region !== 'usw1' && region !== 'euc1') {
+        res.status(400).json({ errno: 400, errmsg: 'INVALID_REGION' })
         return
     }
     if (Number(role) < 0 || Number(role) > 9) {
@@ -297,6 +352,7 @@ export const _updateUserPermission = async (req: Request, res: Response, _next: 
 
     try {
         await updateUserPermission_(
+            region as DataRegion,
             userId,
             role,
             req.user.userId,

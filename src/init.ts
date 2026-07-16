@@ -1,8 +1,8 @@
-import { AUTH_HOST, AUTH_PORT, HTTP_PORT, REDIS_HOSTS, REDIS_PORT, REDIS_PASSWORD, PG_HOST, PG_PORT, PG_USERNAME, PG_PASSWORD, PG_DATABASE, PG_USE_TLS, REDIS_USE_CLUSTER, REDIS_USE_TLS, PG_MAX_CONNECTIONS } from './config'
+import { AUTH_HOST, AUTH_PORT, HTTP_PORT, PG_EUC1_DATABASE, PG_EUC1_HOST, PG_EUC1_MAX_CONNECTIONS, PG_EUC1_PASSWORD, PG_EUC1_PORT, PG_EUC1_USERNAME, PG_EUC1_USE_TLS, PG_USW1_DATABASE, PG_USW1_HOST, PG_USW1_MAX_CONNECTIONS, PG_USW1_PASSWORD, PG_USW1_PORT, PG_USW1_USERNAME, PG_USW1_USE_TLS, REDIS_HOSTS, REDIS_PASSWORD, REDIS_PORT, REDIS_USE_CLUSTER, REDIS_USE_TLS } from './config'
 import { prepareKeyPair } from './modules/jwt'
 import { startHTTPServer, type Server } from './server'
 import { initCache, disconnectCache } from './modules/cache'
-import { initPgClient, disconnectPgClient } from './modules/pg'
+import { initPgClients, disconnectPgClient } from './modules/pg'
 import { prepareRateLimiter } from './server/modules/limiter'
 export { SERVICE_NAME } from './config'
 let server: Server | null = null
@@ -79,8 +79,8 @@ export const initRedisModules = async () => {
 /**
  * Initialize PostgreSQL data source.
  *
- * Uses PostgreSQL client configured by environment variables.
- * Sets `pgClient` on success.
+ * Uses PostgreSQL clients configured by region environment variables.
+ * Sets `pgClients` on success.
  *
  * @returns Promise<void>
  * @throws Error when configuration is missing or connection fails
@@ -88,18 +88,29 @@ export const initRedisModules = async () => {
 export const initPostgresModules = async () => {
     console.time('initialisePostgres')
     try {
-        await initPgClient({
-            PG_HOST,
-            PG_PORT,
-            PG_USERNAME,
-            PG_PASSWORD,
-            PG_DATABASE,
-            PG_MAX_CONNECTIONS,
-            PG_USE_TLS,
+        await initPgClients({
+            'usw1': {
+                PG_HOST: PG_USW1_HOST,
+                PG_PORT: PG_USW1_PORT,
+                PG_USERNAME: PG_USW1_USERNAME,
+                PG_PASSWORD: PG_USW1_PASSWORD,
+                PG_DATABASE: PG_USW1_DATABASE,
+                PG_MAX_CONNECTIONS: PG_USW1_MAX_CONNECTIONS,
+                PG_USE_TLS: PG_USW1_USE_TLS,
+            },
+            'euc1': {
+                PG_HOST: PG_EUC1_HOST,
+                PG_PORT: PG_EUC1_PORT,
+                PG_USERNAME: PG_EUC1_USERNAME,
+                PG_PASSWORD: PG_EUC1_PASSWORD,
+                PG_DATABASE: PG_EUC1_DATABASE,
+                PG_MAX_CONNECTIONS: PG_EUC1_MAX_CONNECTIONS,
+                PG_USE_TLS: PG_EUC1_USE_TLS,
+            },
         })
 
     } catch (e) {
-        console.error('initPgClient() ERROR: ', e)
+        console.error('initPgClients() ERROR: ', e)
         throw e
     }
     console.timeEnd('initialisePostgres')
