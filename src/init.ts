@@ -1,4 +1,4 @@
-import { AUTH_HOST, AUTH_PORT, HTTP_PORT, PG_EUC1_DATABASE, PG_EUC1_HOST, PG_EUC1_MAX_CONNECTIONS, PG_EUC1_PASSWORD, PG_EUC1_PORT, PG_EUC1_USERNAME, PG_EUC1_USE_TLS, PG_USW1_DATABASE, PG_USW1_HOST, PG_USW1_MAX_CONNECTIONS, PG_USW1_PASSWORD, PG_USW1_PORT, PG_USW1_USERNAME, PG_USW1_USE_TLS, REDIS_HOSTS, REDIS_PASSWORD, REDIS_PORT, REDIS_USE_CLUSTER, REDIS_USE_TLS } from './config'
+import { AUTH_HOST, AUTH_PORT, HTTP_PORT, PG_DATABASE_EUC1, PG_HOST_EUC1, PG_MAX_CONNECTIONS_EUC1, PG_PASSWORD_EUC1, PG_PORT_EUC1, PG_USERNAME_EUC1, PG_USE_TLS_EUC1, PG_DATABASE_USW1, PG_HOST_USW1, PG_MAX_CONNECTIONS_USW1, PG_PASSWORD_USW1, PG_PORT_USW1, PG_USERNAME_USW1, PG_USE_TLS_USW1, REDIS_HOSTS, REDIS_PASSWORD, REDIS_PORT, REDIS_USE_CLUSTER, REDIS_USE_TLS } from './config'
 import { prepareKeyPair } from './modules/jwt'
 import { startHTTPServer, type Server } from './server'
 import { initCache, disconnectCache } from './modules/cache'
@@ -90,22 +90,22 @@ export const initPostgresModules = async () => {
     try {
         await initPgClients({
             'usw1': {
-                PG_HOST: PG_USW1_HOST,
-                PG_PORT: PG_USW1_PORT,
-                PG_USERNAME: PG_USW1_USERNAME,
-                PG_PASSWORD: PG_USW1_PASSWORD,
-                PG_DATABASE: PG_USW1_DATABASE,
-                PG_MAX_CONNECTIONS: PG_USW1_MAX_CONNECTIONS,
-                PG_USE_TLS: PG_USW1_USE_TLS,
+                PG_HOST: PG_HOST_USW1,
+                PG_PORT: PG_PORT_USW1,
+                PG_USERNAME: PG_USERNAME_USW1,
+                PG_PASSWORD: PG_PASSWORD_USW1,
+                PG_DATABASE: PG_DATABASE_USW1,
+                PG_MAX_CONNECTIONS: PG_MAX_CONNECTIONS_USW1,
+                PG_USE_TLS: PG_USE_TLS_USW1,
             },
             'euc1': {
-                PG_HOST: PG_EUC1_HOST,
-                PG_PORT: PG_EUC1_PORT,
-                PG_USERNAME: PG_EUC1_USERNAME,
-                PG_PASSWORD: PG_EUC1_PASSWORD,
-                PG_DATABASE: PG_EUC1_DATABASE,
-                PG_MAX_CONNECTIONS: PG_EUC1_MAX_CONNECTIONS,
-                PG_USE_TLS: PG_EUC1_USE_TLS,
+                PG_HOST: PG_HOST_EUC1,
+                PG_PORT: PG_PORT_EUC1,
+                PG_USERNAME: PG_USERNAME_EUC1,
+                PG_PASSWORD: PG_PASSWORD_EUC1,
+                PG_DATABASE: PG_DATABASE_EUC1,
+                PG_MAX_CONNECTIONS: PG_MAX_CONNECTIONS_EUC1,
+                PG_USE_TLS: PG_USE_TLS_EUC1,
             },
         })
 

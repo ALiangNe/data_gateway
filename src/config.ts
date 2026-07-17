@@ -23,10 +23,10 @@ export const AUTH_HOST = process.env.AUTH_HOST
 export const AUTH_PORT = process.env.AUTH_PORT
 
 // OTA service
-export const OTA_USW1_HOST = process.env.OTA_USW1_HOST || ''
-export const OTA_USW1_PORT = process.env.OTA_USW1_PORT || ''
-export const OTA_EUC1_HOST = process.env.OTA_EUC1_HOST || ''
-export const OTA_EUC1_PORT = process.env.OTA_EUC1_PORT || ''
+export const OTA_HOST_USW1 = process.env.OTA_HOST_USW1 || ''
+export const OTA_PORT_USW1 = process.env.OTA_PORT_USW1 || ''
+export const OTA_HOST_EUC1 = process.env.OTA_HOST_EUC1 || ''
+export const OTA_PORT_EUC1 = process.env.OTA_PORT_EUC1 || ''
 
 // Redis configuration
 export const REDIS_HOSTS = process.env.REDIS_HOSTS ? process.env.REDIS_HOSTS.trim().split(',') : []
@@ -39,20 +39,21 @@ export const REDIS_STREAM_READ_COUNT = Number(process.env.REDIS_STREAM_READ_COUN
 export const REDIS_STREAMS_LISTEN = process.env.REDIS_STREAMS_LISTEN ? process.env.REDIS_STREAMS_LISTEN.split(',') : []
 
 // PostgreSQL configuration
-export const PG_USW1_HOST = process.env.PG_USW1_HOST || ''
-export const PG_USW1_PORT = Number(process.env.PG_USW1_PORT || '')
-export const PG_USW1_USERNAME = process.env.PG_USW1_USERNAME || ''
-export const PG_USW1_PASSWORD = process.env.PG_USW1_PASSWORD || ''
-export const PG_USW1_DATABASE = process.env.PG_USW1_DATABASE || ''
-export const PG_USW1_MAX_CONNECTIONS = Number(process.env.PG_USW1_MAX_CONNECTIONS || 10)
-export const PG_USW1_USE_TLS = process.env.PG_USW1_USE_TLS === 'true'
-export const PG_EUC1_HOST = process.env.PG_EUC1_HOST || ''
-export const PG_EUC1_PORT = Number(process.env.PG_EUC1_PORT || '')
-export const PG_EUC1_USERNAME = process.env.PG_EUC1_USERNAME || ''
-export const PG_EUC1_PASSWORD = process.env.PG_EUC1_PASSWORD || ''
-export const PG_EUC1_DATABASE = process.env.PG_EUC1_DATABASE || ''
-export const PG_EUC1_MAX_CONNECTIONS = Number(process.env.PG_EUC1_MAX_CONNECTIONS || 10)
-export const PG_EUC1_USE_TLS = process.env.PG_EUC1_USE_TLS === 'true'
+export const PG_HOST_USW1 = process.env.PG_HOST_USW1 || ''
+export const PG_PORT_USW1 = Number(process.env.PG_PORT_USW1 || '')
+export const PG_USERNAME_USW1 = process.env.PG_USERNAME_USW1 || ''
+export const PG_PASSWORD_USW1 = process.env.PG_PASSWORD_USW1 || ''
+export const PG_DATABASE_USW1 = process.env.PG_DATABASE_USW1 || ''
+export const PG_MAX_CONNECTIONS_USW1 = Number(process.env.PG_MAX_CONNECTIONS_USW1 || 10)
+export const PG_USE_TLS_USW1 = process.env.PG_USE_TLS_USW1 === 'true'
+
+export const PG_HOST_EUC1 = process.env.PG_HOST_EUC1 || ''
+export const PG_PORT_EUC1 = Number(process.env.PG_PORT_EUC1 || '')
+export const PG_USERNAME_EUC1 = process.env.PG_USERNAME_EUC1 || ''
+export const PG_PASSWORD_EUC1 = process.env.PG_PASSWORD_EUC1 || ''
+export const PG_DATABASE_EUC1 = process.env.PG_DATABASE_EUC1 || ''
+export const PG_MAX_CONNECTIONS_EUC1 = Number(process.env.PG_MAX_CONNECTIONS_EUC1 || 10)
+export const PG_USE_TLS_EUC1 = process.env.PG_USE_TLS_EUC1 === 'true'
 
 // Platform list
 export const PLATFORM_LIST = process.env.PLATFORM_LIST ? process.env.PLATFORM_LIST.split(',') : []

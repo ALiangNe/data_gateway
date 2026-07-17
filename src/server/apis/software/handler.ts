@@ -1,28 +1,28 @@
 import axios from 'axios'
-import { OTA_EUC1_HOST, OTA_EUC1_PORT, OTA_USW1_HOST, OTA_USW1_PORT } from '../../../config'
+import { OTA_HOST_EUC1, OTA_PORT_EUC1, OTA_HOST_USW1, OTA_PORT_USW1 } from '../../../config'
 import type { DataListResult, DataRegion, Software, SoftwareUploadPostResult } from '../../../type'
 
-const getOtaService = (region: DataRegion) => {
-    return region === 'usw1'
-        ? { host: OTA_USW1_HOST, port: OTA_USW1_PORT }
-        : { host: OTA_EUC1_HOST, port: OTA_EUC1_PORT }
+const getOtaConfig = (region: DataRegion) => {
+    if (region === 'usw1') return { host: OTA_HOST_USW1, port: OTA_PORT_USW1 }
+    if (region === 'euc1') return { host: OTA_HOST_EUC1, port: OTA_PORT_EUC1 }
+    throw new Error('INVALID_REGION')
 }
 
 /**
  * List software handler.
  * @returns paginated software list
  */
-export const listSoftware_ = async (
-    region: DataRegion,
-    page: number,
-    pageSize: number,
-    type?: string,
-    name?: string,
-    version?: string,
-    status?: string,
-): Promise<DataListResult<Software>> => {
-    const { host, port } = getOtaService(region)
-    if (!host || !port) throw new Error('OTA_SERVICE_NOT_CONFIGURED')
+export const listSoftware_ = async (params: {
+    region: DataRegion
+    page: number
+    pageSize: number
+    type?: string
+    name?: string
+    version?: string
+    status?: string
+}): Promise<DataListResult<Software>> => {
+    const { region, page, pageSize, type, name, version, status } = params
+    const { host, port } = getOtaConfig(region)
 
     let res
     try {
@@ -40,6 +40,10 @@ export const listSoftware_ = async (
         console.error('list software failed: ', error)
         throw error
     }
+    if (!res.data.data) {
+        console.error('request ota service failed: ', res.data)
+        throw new Error('FAILED_LIST_SOFTWARE')
+    }
 
     return {
         list: res.data.data.items,
@@ -56,8 +60,7 @@ export const getSoftwareVersions_ = async (
     region: DataRegion,
     name: string,
 ): Promise<string[]> => {
-    const { host, port } = getOtaService(region)
-    if (!host || !port) throw new Error('OTA_SERVICE_NOT_CONFIGURED')
+    const { host, port } = getOtaConfig(region)
 
     let res
     try {
@@ -68,6 +71,10 @@ export const getSoftwareVersions_ = async (
         console.error('get software versions failed: ', error)
         throw error
     }
+    if (!res.data.data) {
+        console.error('request ota service failed: ', res.data)
+        throw new Error('FAILED_GET_SOFTWARE_VERSIONS')
+    }
 
     return res.data.data as string[]
 }
@@ -76,20 +83,20 @@ export const getSoftwareVersions_ = async (
  * Get upload post handler.
  * @returns software id and S3 upload post
  */
-export const getUploadPost_ = async (
-    region: DataRegion,
-    type: string,
-    name: string,
-    version: string,
-    dependencies: Record<string, string>,
-    changelog: string,
-    fileName: string,
-    mimeType: string,
-    sizeBytes: number,
-    checksum: string,
-): Promise<SoftwareUploadPostResult> => {
-    const { host, port } = getOtaService(region)
-    if (!host || !port) throw new Error('OTA_SERVICE_NOT_CONFIGURED')
+export const getUploadPost_ = async (params: {
+    region: DataRegion
+    type: string
+    name: string
+    version: string
+    dependencies: Record<string, string>
+    changelog: string
+    fileName: string
+    mimeType: string
+    sizeBytes: number
+    checksum: string
+}): Promise<SoftwareUploadPostResult> => {
+    const { region, type, name, version, dependencies, changelog, fileName, mimeType, sizeBytes, checksum } = params
+    const { host, port } = getOtaConfig(region)
 
     let res
     try {
@@ -108,6 +115,10 @@ export const getUploadPost_ = async (
         console.error('get upload post failed: ', error)
         throw error
     }
+    if (!res.data.data) {
+        console.error('request ota service failed: ', res.data)
+        throw new Error('FAILED_GET_UPLOAD_POST')
+    }
 
     return res.data.data as SoftwareUploadPostResult
 }
@@ -123,8 +134,7 @@ export const completeUpload_ = async (
     id: string,
     checksum: string,
 ): Promise<void> => {
-    const { host, port } = getOtaService(region)
-    if (!host || !port) throw new Error('OTA_SERVICE_NOT_CONFIGURED')
+    const { host, port } = getOtaConfig(region)
 
     try {
         await axios.post(`http://${host}:${port}/software/complete-upload`, {
