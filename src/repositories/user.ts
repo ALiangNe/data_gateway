@@ -2,7 +2,7 @@
  * User repository
  */
 import { parseError, pgClients } from '../modules/pg'
-import type { DataListResult, DataRegion, User } from '../type'
+import type { DataListResult, DataRegion, OrderBy, Sort, User } from '../type'
 import type { QueryResult } from 'pg'
 
 const USER_TABLE = 'users'
@@ -46,52 +46,51 @@ const toUser = (row: Record<string, unknown>): User => {
  */
 export const queryUsers = async (
     region: DataRegion,
-    filters: Record<string, unknown> = {},
-    page?: number,
-    pageSize?: number,
-    sortBy: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
+    page: number | undefined,
+    pageSize: number | undefined,
+    sortBy: OrderBy,
+    order: Sort,
+    username?: string,
+    email?: string,
+    status?: User['status'],
+    role?: number,
+    createdAt?: [string?, string?],
+    updatedAt?: [string?, string?],
 ): Promise<DataListResult<User>> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const paginated = page != null && pageSize != null
-    if (paginated) {
-        if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-        if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
-    }
-    if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
-
     const values: unknown[] = []
     const conditions: string[] = []
 
-    for (const [key, value] of Object.entries(filters)) {
+    for (const [column, value] of [
+        ['u.username', username],
+        ['u.email', email],
+        ['u.status', status],
+        ['u.role', role],
+    ] as const) {
         if (value === undefined) continue
+        conditions.push(`${column} = $${values.length + 1}`)
+        values.push(value)
+    }
 
-        const col = USER_COLUMN_MAP[key]
-        if (!col) throw 'INVALID_QUERY_KEYS'
-
-        if (!Array.isArray(value)) {
-            conditions.push(`u.${col} = $${values.length + 1}`)
-            values.push(value)
-            continue
+    for (const [column, range] of [
+        ['u.created_at', createdAt],
+        ['u.updated_at', updatedAt],
+    ] as const) {
+        if (range?.[0]) {
+            conditions.push(`${column} >= $${values.length + 1}`)
+            values.push(range[0])
         }
-
-        const [start, end] = value as [unknown?, unknown?]
-        if (start != null && start !== '') {
-            conditions.push(`u.${col} >= $${values.length + 1}`)
-            values.push(start)
-        }
-        if (end != null && end !== '') {
-            conditions.push(`u.${col} <= $${values.length + 1}`)
-            values.push(end)
+        if (range?.[1]) {
+            conditions.push(`${column} <= $${values.length + 1}`)
+            values.push(range[1])
         }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
     const orderCol = USER_COLUMN_MAP[sortBy]
-    if (!orderCol) throw 'INVALID_SORT_BY'
 
     const countSql = `SELECT COUNT(*)::int AS total FROM ${USER_TABLE} u ${whereClause}`
 

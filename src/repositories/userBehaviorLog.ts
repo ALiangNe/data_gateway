@@ -111,29 +111,29 @@ const AGGREGATE_CONFIG: Record<UserBehaviorLogAggregateBy, AggregateConfig> = {
  */
 export const queryUserBehaviorLogs = async (
     region: DataRegion,
+    page: number,
+    pageSize: number,
+    order: 'asc' | 'desc',
     aggregateBy: UserBehaviorLogAggregateBy,
-    userId: string = '',
-    createdAt: [string?, string?] | undefined,
-    page: number = 1,
-    pageSize: number = 20,
-    order: 'asc' | 'desc' = 'desc',
+    userId?: string,
+    createdAt?: [string?, string?],
 ): Promise<DataListResult<UserBehaviorLogAggregate>> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const config = AGGREGATE_CONFIG[aggregateBy]
-    if (!config) throw 'INVALID_AGGREGATE_BY'
-    if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-    if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
-    if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
 
     const { groupFields, aggregateFields, mapper } = config
     const values: unknown[] = []
     const conditions: string[] = []
 
+    if (userId !== undefined) {
+        conditions.push(`user_id = $${values.length + 1}`)
+        values.push(userId)
+    }
+
     if (createdAt) {
         const [start, end] = createdAt
-
         if (start != null && start !== '') {
             conditions.push(`created_at >= $${values.length + 1}`)
             values.push(start)
@@ -143,11 +143,6 @@ export const queryUserBehaviorLogs = async (
             conditions.push(`created_at <= $${values.length + 1}`)
             values.push(end)
         }
-    }
-
-    if (userId.trim()) {
-        conditions.push(`user_id = $${values.length + 1}`)
-        values.push(userId)
     }
 
     const whereClause = conditions.length > 0

@@ -2,7 +2,7 @@
  * Knowledge repository
  */
 import { parseError, pgClients } from '../modules/pg'
-import type { DataListResult, DataRegion, Knowledge } from '../type'
+import type { DataListResult, DataRegion, Knowledge, OrderBy, Sort } from '../type'
 import type { QueryResult } from 'pg'
 
 const KNOWLEDGE_TABLE = 'knowledge'
@@ -37,55 +37,25 @@ const toKnowledge = (row: Record<string, unknown>): Knowledge => {
  */
 export const queryKnowledge = async (
     region: DataRegion,
-    filters: Record<string, unknown> = {},
-    page: number = 1,
-    pageSize: number = 20,
-    sortBy: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
+    page: number,
+    pageSize: number,
+    sortBy: OrderBy,
+    order: Sort,
+    document?: string,
 ): Promise<DataListResult<Knowledge>> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
-    if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-    if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
-    if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
-
     const values: unknown[] = []
     const conditions: string[] = []
 
-    for (const [key, value] of Object.entries(filters)) {
-        if (value === undefined) continue
-
-        const col = KNOWLEDGE_COLUMN_MAP[key]
-        if (!col) throw 'INVALID_QUERY_KEYS'
-
-        if (Array.isArray(value)) {
-            const [start, end] = value as [unknown?, unknown?]
-            if (start != null && start !== '') {
-                conditions.push(`${col} >= $${values.length + 1}`)
-                values.push(start)
-            }
-            if (end != null && end !== '') {
-                conditions.push(`${col} <= $${values.length + 1}`)
-                values.push(end)
-            }
-            continue
-        }
-
-        if (key === 'document') {
-            conditions.push(`${col} ILIKE $${values.length + 1}`)
-            values.push(`%${value}%`)
-            continue
-        }
-
-        conditions.push(`${col} = $${values.length + 1}`)
-        values.push(value)
+    if (document !== undefined) {
+        conditions.push(`document ILIKE $${values.length + 1}`)
+        values.push(`%${document}%`)
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
     const orderCol = KNOWLEDGE_COLUMN_MAP[sortBy]
-    if (!orderCol) throw 'INVALID_SORT_BY'
 
     const countSql = `SELECT COUNT(*)::int AS total FROM ${KNOWLEDGE_TABLE} ${whereClause}`
 

@@ -52,6 +52,14 @@ export interface Bot {
     updatedAt: Date
 }
 
+export type OrderBy =
+    | 'registeredAt'
+    | 'activatedAt'
+    | 'createdAt'
+    | 'updatedAt'
+
+export type Sort = 'asc' | 'desc'
+
 export interface ChatHistory {
     id: string
     role: string

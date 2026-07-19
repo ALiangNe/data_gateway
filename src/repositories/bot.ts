@@ -2,7 +2,7 @@
  * Bot repository
  */
 import { parseError, pgClients } from '../modules/pg'
-import type { Bot, DataListResult, DataRegion } from '../type'
+import type { Bot, DataListResult, DataRegion, OrderBy, Sort } from '../type'
 import type { QueryResult } from 'pg'
 
 const BOT_TABLE = 'bots'
@@ -39,58 +39,47 @@ const toBot = (row: Record<string, unknown>): Bot => {
 
 /**
  * Query bots with pagination and ordering
- * @param filters filter criteria
+ * @param region data region
  * @param page page number
  * @param pageSize items per page
  * @param sortBy sort field
  * @param order sort direction
+ * @param model bot model filter
+ * @param serialNumber bot serial number filter
+ * @param manufacturer bot manufacturer filter
+ * @param status bot status filter
  * @returns bot list and total count
  */
 export const queryBots = async (
     region: DataRegion,
-    filters: Record<string, unknown> = {},
-    page: number = 1,
-    pageSize: number = 20,
-    sortBy: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
+    page: number,
+    pageSize: number,
+    sortBy: OrderBy,
+    order: Sort,
+    model?: string,
+    serialNumber?: string,
+    manufacturer?: string,
+    status?: string,
 ): Promise<DataListResult<Bot>> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
-    if (!Number.isFinite(page) || page < 1) throw 'INVALID_PAGE'
-    if (!Number.isFinite(pageSize) || pageSize <= 0) throw 'INVALID_PAGE_SIZE'
-    if (order !== 'asc' && order !== 'desc') throw 'INVALID_ORDER'
-
     const values: unknown[] = []
     const conditions: string[] = []
 
-    for (const [key, value] of Object.entries(filters)) {
+    for (const [column, value] of [
+        ['model', model],
+        ['serial_number', serialNumber],
+        ['manufacturer', manufacturer],
+        ['status', status],
+    ] as const) {
         if (value === undefined) continue
-
-        const col = BOT_COLUMN_MAP[key]
-        if (!col) throw 'INVALID_QUERY_KEYS'
-
-        if (!Array.isArray(value)) {
-            conditions.push(`${col} = $${values.length + 1}`)
-            values.push(value)
-            continue
-        }
-
-        const [start, end] = value as [unknown?, unknown?]
-        if (start != null && start !== '') {
-            conditions.push(`${col} >= $${values.length + 1}`)
-            values.push(start)
-        }
-        if (end != null && end !== '') {
-            conditions.push(`${col} <= $${values.length + 1}`)
-            values.push(end)
-        }
+        conditions.push(`${column} = $${values.length + 1}`)
+        values.push(value)
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
     const orderCol = BOT_COLUMN_MAP[sortBy]
-    if (!orderCol) throw 'INVALID_SORT_BY'
 
     const countSql = `SELECT COUNT(*)::int AS total FROM ${BOT_TABLE} ${whereClause}`
 

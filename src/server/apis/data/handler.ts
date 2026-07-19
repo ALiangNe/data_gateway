@@ -8,33 +8,37 @@ import { queryUsers, updateUserPermission } from '../../../repositories/user'
 import { queryUserBehaviorLogs, queryUserBehaviorStats } from '../../../repositories/userBehaviorLog'
 import { queryUserMemory } from '../../../repositories/userMemory'
 import { getLocationByIp } from '../../../services/maxmind'
-import type { Bot, ChatHistory, DataListResult, DataLookupEntity, DataRegion, Knowledge, McpCapability, MonitorTraceDetail, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorStatsQueryResult, UserBehaviorStatsResult } from '../../../type'
+import type { Bot, ChatHistory, DataListResult, DataLookupEntity, DataRegion, Knowledge, McpCapability, MonitorTraceDetail, OrderBy, Sort, User, UserBehaviorLogAggregate, UserBehaviorLogAggregateBy, UserBehaviorStatsQueryResult, UserBehaviorStatsResult } from '../../../type'
 
 /**
  * Get bots handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated bot list
+ * @param params - Query params.
+ * @returns - { list: Bot[], total: number }.
  */
-export const getBots_ = async (
-    region: DataRegion,
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<Bot>> => {
+export const getBots_ = async (params: {
+    region: DataRegion
+    page: number
+    pageSize: number
+    sortBy: OrderBy
+    order: Sort
+    model?: string
+    serialNumber?: string
+    manufacturer?: string
+    status?: string
+}): Promise<DataListResult<Bot>> => {
+    const { region, page, pageSize, sortBy, order, model, serialNumber, manufacturer, status } = params
+
     try {
         return await queryBots(
             region,
-            filters,
             page,
             pageSize,
             sortBy,
             order,
+            model,
+            serialNumber,
+            manufacturer,
+            status,
         )
     } catch (error) {
         console.error('get bots failed: ', error)
@@ -44,29 +48,27 @@ export const getBots_ = async (
 
 /**
  * Get knowledge handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated knowledge list
+ * @param params - Query params.
+ * @returns - { list: Knowledge[], total: number }.
  */
-export const getKnowledge_ = async (
-    region: DataRegion,
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<Knowledge>> => {
+export const getKnowledge_ = async (params: {
+    region: DataRegion
+    page: number
+    pageSize: number
+    sortBy: OrderBy
+    order: Sort
+    document?: string
+}): Promise<DataListResult<Knowledge>> => {
+    const { region, page, pageSize, sortBy, order, document } = params
+
     try {
         return await queryKnowledge(
             region,
-            filters,
             page,
             pageSize,
             sortBy,
             order,
+            document,
         )
     } catch (error) {
         console.error('get knowledge failed: ', error)
@@ -76,29 +78,27 @@ export const getKnowledge_ = async (
 
 /**
  * Get MCP capabilities handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated MCP capability list
+ * @param params - Query params.
+ * @returns - { list: McpCapability[], total: number }.
  */
-export const getMcpCapabilities_ = async (
-    region: DataRegion,
-    filters: Record<string, unknown>,
-    page: number,
-    pageSize: number,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<McpCapability>> => {
+export const getMcpCapabilities_ = async (params: {
+    region: DataRegion
+    page: number
+    pageSize: number
+    sortBy: OrderBy
+    order: Sort
+    document?: string
+}): Promise<DataListResult<McpCapability>> => {
+    const { region, page, pageSize, sortBy, order, document } = params
+
     try {
         return await queryMcpCapabilities(
             region,
-            filters,
             page,
             pageSize,
             sortBy,
             order,
+            document,
         )
     } catch (error) {
         console.error('get MCP capabilities failed: ', error)
@@ -111,7 +111,12 @@ export const getMcpCapabilities_ = async (
  * @param traceId - trace id
  * @returns monitor trace detail
  */
-export const getMonitorLogsTrace_ = async (region: DataRegion, traceId: string): Promise<MonitorTraceDetail | null> => {
+export const getMonitorLogsTrace_ = async (params: {
+    region: DataRegion
+    traceId: string
+}): Promise<MonitorTraceDetail | null> => {
+    const { region, traceId } = params
+
     try {
         return await queryMonitorLogsTrace(region, traceId)
     } catch (error) {
@@ -122,29 +127,37 @@ export const getMonitorLogsTrace_ = async (region: DataRegion, traceId: string):
 
 /**
  * Get users handler.
- * @param filters - Filter criteria.
- * @param page - Page number.
- * @param pageSize - Items per page.
- * @param sortBy - Sort field.
- * @param order - Sort direction: asc or desc.
- * @returns paginated user list
+ * @param params - Query params.
+ * @returns - { list: User[], total: number }.
  */
-export const getUsers_ = async (
-    region: DataRegion,
-    filters: Record<string, unknown>,
-    page: number | undefined,
-    pageSize: number | undefined,
-    sortBy: string | undefined,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<User>> => {
+export const getUsers_ = async (params: {
+    region: DataRegion
+    page?: number
+    pageSize?: number
+    sortBy: OrderBy
+    order: Sort
+    username?: string
+    email?: string
+    status?: User['status']
+    role?: number
+    createdAt?: [string?, string?]
+    updatedAt?: [string?, string?]
+}): Promise<DataListResult<User>> => {
+    const { region, page, pageSize, sortBy, order, username, email, status, role, createdAt, updatedAt } = params
+
     try {
         const { list, total } = await queryUsers(
             region,
-            filters,
             page,
             pageSize,
             sortBy,
             order,
+            username,
+            email,
+            status,
+            role,
+            createdAt,
+            updatedAt,
         )
         return {
             list: list.map((row) => ({
@@ -167,26 +180,27 @@ export const getUsers_ = async (
  * @param order - Sort direction
  * @returns paginated aggregated user behavior log list
  */
-export const getUserBehaviorLogs_ = async (
-    region: DataRegion,
-    aggregateBy: UserBehaviorLogAggregateBy,
-    userId: string = '',
-    createdAt: [string?, string?] | undefined,
-    page: number,
-    pageSize: number,
-    order: 'asc' | 'desc',
-): Promise<DataListResult<UserBehaviorLogAggregate>> => {
+export const getUserBehaviorLogs_ = async (params: {
+    region: DataRegion
+    page: number
+    pageSize: number
+    order: Sort
+    aggregateBy: UserBehaviorLogAggregateBy
+    userId?: string
+    createdAt?: [string?, string?]
+}): Promise<DataListResult<UserBehaviorLogAggregate>> => {
+    const { region, page, pageSize, order, aggregateBy, userId, createdAt } = params
     let result: DataListResult<UserBehaviorLogAggregate>
 
     try {
         result = await queryUserBehaviorLogs(
             region,
-            aggregateBy,
-            userId,
-            createdAt,
             page,
             pageSize,
             order,
+            aggregateBy,
+            userId,
+            createdAt,
         )
     } catch (error) {
         console.error('get user behavior logs failed: ', error)
@@ -256,10 +270,11 @@ export const getUserBehaviorLogs_ = async (
  * @param createdAt - createdAt range filter
  * @returns user behavior stats
  */
-export const getUserBehaviorStats_ = async (
-    region: DataRegion,
-    createdAt: [string?, string?] | undefined,
-): Promise<UserBehaviorStatsResult> => {
+export const getUserBehaviorStats_ = async (params: {
+    region: DataRegion
+    createdAt?: [string?, string?]
+}): Promise<UserBehaviorStatsResult> => {
+    const { region, createdAt } = params
     let result: UserBehaviorStatsQueryResult
 
     try {
@@ -299,7 +314,13 @@ export const getUserBehaviorStats_ = async (
  * @param soulId soul id
  * @returns memory text
  */
-export const getUserMemory_ = async (region: DataRegion, userId: string, soulId: string): Promise<string> => {
+export const getUserMemory_ = async (params: {
+    region: DataRegion
+    userId: string
+    soulId: string
+}): Promise<string> => {
+    const { region, userId, soulId } = params
+
     try {
         return await queryUserMemory(region, userId, soulId)
     } catch (error) {
@@ -373,11 +394,13 @@ export const getChatHistories_ = async (
  * @param ids record ids
  * @returns raw database rows
  */
-export const getDataLookup_ = async (
-    region: DataRegion,
-    entity: DataLookupEntity,
-    ids: string[],
-): Promise<Record<string, unknown>[]> => {
+export const getDataLookup_ = async (params: {
+    region: DataRegion
+    entity: DataLookupEntity
+    ids: string[]
+}): Promise<Record<string, unknown>[]> => {
+    const { region, entity, ids } = params
+
     try {
         return await lookupData(region, entity, ids)
     } catch (error) {
@@ -393,12 +416,14 @@ export const getDataLookup_ = async (
  * @param editedBy current user id
  * @returns updated user id and role
  */
-export const updateUserPermission_ = async (
-    region: DataRegion,
-    userId: string,
-    role: number,
-    editedBy: string,
-): Promise<void> => {
+export const updateUserPermission_ = async (params: {
+    region: DataRegion
+    userId: string
+    role: number
+    editedBy: string
+}): Promise<void> => {
+    const { region, userId, role, editedBy } = params
+
     if (editedBy === userId) throw new Error('CANNOT_UPDATE_SELF')
 
     let rows: Record<string, unknown>[]
