@@ -1,8 +1,7 @@
 /**
- * Just another boring web service
- * By JohnJiang, Oct 2024
+ * Data Gateway process entry.
  *
- * This service emits following process level events in related condition:
+ * This service emits the following process-level events:
  * - servicechange: { pid: process.pid, status: 'imperfect_shutdown' | 'gracefully_shutdown' | 'service_ready' }
  * - servicealert: { pid: process.pid, status: 'uncaught_exception' }
  *

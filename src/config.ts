@@ -1,5 +1,5 @@
 /**
- * Basic environment variables required by API gateway.
+ * Environment variables for the data query service.
  */
 import { resolve } from 'node:path'
 

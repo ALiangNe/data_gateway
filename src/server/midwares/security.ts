@@ -1,5 +1,5 @@
 /**
- * Security Related Middleware (DATA_GATEWAY)
+ * Security-related middleware.
  */
 import type { Request, Response, NextFunction } from 'express'
 import { rateLimiter } from '../modules/limiter'
@@ -27,4 +27,3 @@ export const rateLimiteCheck = async (req: Request, res: Response, next: NextFun
         return
     }
 }
-

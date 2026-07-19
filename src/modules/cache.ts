@@ -1,5 +1,5 @@
 /**
- * Cache module, reuses Redis in gateway
+ * Redis cache module.
  */
 import { createClient, createCluster } from 'redis'
 import type { RedisClientType, RedisClusterType } from 'redis'
@@ -42,7 +42,7 @@ export const initCache = async (config: RedisCredential) => {
     try {
         await redisClient.connect()
     } catch (e) {
-        console.error('Error when create redisClient in DATA_GATEWAY!', e)
+        console.error('Error when create redisClient in data_gateway!', e)
         throw 'FAILED_CREATE_REDIS_CLIENT'
     }
 
@@ -68,6 +68,6 @@ export const disconnectCache = async () => {
         throw 'FAILED_DISCONNECT_CACHE_REDIS'
     }
 
-    console.log('Disconnected from redis:cache! (DATA_GATEWAY)')
+    console.log('Disconnected from redis:cache! (data_gateway)')
     return 1
 }

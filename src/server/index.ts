@@ -1,5 +1,5 @@
 /**
- * Pure gateway: exposes a unified reverse proxy and forwards requests to downstream services.
+ * HTTP server for internal data query APIs.
  */
 import type { Server } from 'node:http'
 export type { Server }
@@ -17,7 +17,6 @@ import resourceRoute from './apis/resource'
 import softwareRoute from './apis/software'
 import userRoute from './apis/user'
 import { CORS_ORIGINS, NODE_ENV } from '../config'
-// Expose listener instance to higher level scripts
 const listener = express()
 
 listener.disable('x-powered-by')
@@ -33,7 +32,7 @@ listener.use(logRequest)
 // IP whitelist (strictly enforced in non-dev environments)
 listener.use(ipCheck)
 
-// load APIs (routes to business logc)
+// Load APIs by feature.
 listener.use('/', healthRoute)
 listener.use('/chat', rateLimiteCheck, tokenCheck, chatRoute)
 listener.use('/common', rateLimiteCheck, tokenCheck, commonRoute)

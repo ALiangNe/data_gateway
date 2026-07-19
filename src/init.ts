@@ -23,7 +23,7 @@ export const initJwtModules = async () => {
         try {
             await prepareKeyPair({ host: AUTH_HOST, port: parseInt(AUTH_PORT, 10) })
         } catch (e) {
-            console.error('prepareKeyPair() failed in DATA_GATEWAY: ', e)
+            console.error('prepareKeyPair() failed in data_gateway: ', e)
             throw e
         }
     } else {
@@ -35,16 +35,13 @@ export const initJwtModules = async () => {
 }
 
 /**
- * Initialize Redis modules: cache, msglist listener, Pub/Sub messenger and rate limiter.
+ * Initialize Redis cache and rate limiter.
  *
  * Side effects:
- * - Sets `redisClient` and `redisClients`.
- * - Starts msglist blocking listener when `MSG_LIST_LISTEN` is configured.
- * - Starts Redis Pub/Sub messenger and subscribes to channels from `CHANNEL_LIST`.
  * - Prepares Redis-based rate limiter for HTTP protection.
  *
  * @returns Promise<void>
- * @throws Error if Redis clients are not available when starting msglist listener
+ * @throws Error when Redis connection or rate limiter setup fails
  */
 export const initRedisModules = async () => {
 
@@ -56,9 +53,9 @@ export const initRedisModules = async () => {
             REDIS_PASSWORD,
             REDIS_USE_CLUSTER,
             REDIS_USE_TLS,
-            onReady: () => { console.log('Redis cache ready in DATA_GATEWAY') },
-            onError: (e: unknown) => { console.error('Redis cache error in DATA_GATEWAY: ', e) },
-            onReconnecting: () => { console.log('Redis cache reconnecting in DATA_GATEWAY') },
+            onReady: () => { console.log('Redis cache ready in data_gateway') },
+            onError: (e: unknown) => { console.error('Redis cache error in data_gateway: ', e) },
+            onReconnecting: () => { console.log('Redis cache reconnecting in data_gateway') },
         })
     } catch (e) {
         console.error('initCache() ERROR: ', e)

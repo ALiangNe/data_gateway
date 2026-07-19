@@ -1,5 +1,5 @@
 /**
- * Common gateway middlewares.
+ * Auth and request middlewares.
  */
 import type { Request, Response, NextFunction } from 'express'
 import { IP_WHITELIST, NODE_ENV } from '../../config'
