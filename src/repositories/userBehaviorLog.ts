@@ -290,12 +290,10 @@ export const queryUserBehaviorStats = async (
 
     if (createdAt) {
         const [start, end] = createdAt
-
         if (start != null && start !== '') {
             conditions.push(`created_at >= $${values.length + 1}`)
             values.push(start)
         }
-
         if (end != null && end !== '') {
             conditions.push(`created_at <= $${values.length + 1}`)
             values.push(end)

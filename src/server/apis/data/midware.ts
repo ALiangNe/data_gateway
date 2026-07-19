@@ -383,9 +383,11 @@ export const _getUserMemory = async (req: Request, res: Response, _next: NextFun
  * getChatActiveDates middleware.
  */
 export const _getChatActiveDates = async (req: Request, res: Response, _next: NextFunction) => {
-    const { region, userId, currentTime } = req.body
+    const region = req.query.region as DataRegion
+    const userId = req.query.userId as string | undefined
+    const createdAt = req.query.createdAt as [string?, string?] | undefined
 
-    if (!region || !userId || !currentTime) {
+    if (!region || !userId || !createdAt?.[0] || !createdAt?.[1]) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
         return
     }
@@ -396,11 +398,11 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
 
     let result: string[] | null = null
     try {
-        result = await getChatActiveDates_(
+        result = await getChatActiveDates_({
             region,
             userId,
-            currentTime,
-        )
+            createdAt: [createdAt[0], createdAt[1]],
+        })
     } catch (error) {
         console.error('getChatActiveDates failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })
@@ -414,9 +416,12 @@ export const _getChatActiveDates = async (req: Request, res: Response, _next: Ne
  * getChatHistories middleware.
  */
 export const _getChatHistories = async (req: Request, res: Response, _next: NextFunction) => {
-    const { region, userId, soulId, date } = req.body
+    const region = req.query.region as DataRegion
+    const userId = req.query.userId as string | undefined
+    const soulId = req.query.soulId as string | undefined
+    const createdAt = req.query.createdAt as [string?, string?] | undefined
 
-    if (!region || !userId || !soulId || !date) {
+    if (!region || !userId || !soulId || !createdAt?.[0] || !createdAt?.[1]) {
         res.status(400).json({ errno: 400, errmsg: 'MISSING_REQUIRED_PARAMETERS' })
         return
     }
@@ -427,12 +432,12 @@ export const _getChatHistories = async (req: Request, res: Response, _next: Next
 
     let result: ChatHistory[] | null = null
     try {
-        result = await getChatHistories_(
+        result = await getChatHistories_({
             region,
             userId,
             soulId,
-            date,
-        )
+            createdAt: [createdAt[0], createdAt[1]],
+        })
     } catch (error) {
         console.error('getChatHistories failed: ', error)
         res.status(500).json({ errno: 500, errmsg: String(error) })

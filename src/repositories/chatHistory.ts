@@ -25,21 +25,19 @@ const toChatHistory = (row: Record<string, unknown>): ChatHistory => {
 /**
  * Query distinct chat active dates in time range
  * @param userId user id
- * @param startUtc range start UTC time
- * @param endUtc range end UTC time
+ * @param createdAt created_at range filter
  * @returns distinct local dates in YYYY-MM-DD format
  */
 export const queryChatActiveDates = async (
     region: DataRegion,
     userId: string,
-    startUtc: string,
-    endUtc: string,
+    createdAt: [string, string],
 ): Promise<string[]> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
     const sql = `
-        SELECT DISTINCT TO_CHAR(created_at AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD') AS date
+        SELECT DISTINCT TO_CHAR(created_at, 'YYYY-MM-DD') AS date
         FROM ${CHAT_HISTORY_TABLE}
         WHERE user_id = $1
           AND created_at >= $2
@@ -49,7 +47,7 @@ export const queryChatActiveDates = async (
 
     let res: QueryResult<{ date: string }>
     try {
-        res = await client.query(sql, [userId, startUtc, endUtc])
+        res = await client.query(sql, [userId, createdAt[0], createdAt[1]])
     } catch (error) {
         throw parseError(error)
     }
@@ -61,33 +59,53 @@ export const queryChatActiveDates = async (
  * Query chat histories in time range
  * @param userId user id
  * @param soulId soul id
- * @param startUtc range start UTC time
- * @param endUtc range end UTC time
+ * @param createdAt created_at range filter
  * @returns chat history list
  */
 export const queryChatHistories = async (
     region: DataRegion,
     userId: string,
     soulId: string,
-    startUtc: string,
-    endUtc: string,
+    createdAt: [string, string],
 ): Promise<ChatHistory[]> => {
     const client = pgClients[region]
     if (!client) throw 'PG_CLIENT_NOT_READY'
 
+    const values: unknown[] = []
+    const conditions: string[] = []
+
+    for (const [column, value] of [
+        ['user_id', userId],
+        ['soul_id', soulId],
+    ] as const) {
+        conditions.push(`${column} = $${values.length + 1}`)
+        values.push(value)
+    }
+
+    if (createdAt) {
+        const [start, end] = createdAt
+        if (start != null && start !== '') {
+            conditions.push(`created_at >= $${values.length + 1}`)
+            values.push(start)
+        }
+        if (end != null && end !== '') {
+            conditions.push(`created_at < $${values.length + 1}`)
+            values.push(end)
+        }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
     const sql = `
         SELECT id, role, content, created_at
         FROM ${CHAT_HISTORY_TABLE}
-        WHERE user_id = $1
-          AND soul_id = $2
-          AND created_at >= $3
-          AND created_at < $4
+        ${whereClause}
         ORDER BY created_at ASC, CASE WHEN role = 'user' THEN 0 ELSE 1 END ASC
     `
 
     let res: QueryResult<{ id: string; role: string; content: string; created_at: Date }>
     try {
-        res = await client.query(sql, [userId, soulId, startUtc, endUtc])
+        res = await client.query(sql, values)
     } catch (error) {
         throw parseError(error)
     }

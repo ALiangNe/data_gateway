@@ -332,28 +332,18 @@ export const getUserMemory_ = async (params: {
 /**
  * Get chat active dates handler.
  * @param userId user id
- * @param currentTime current UTC time from frontend
+ * @param createdAt UTC createdAt range filter
  * @returns distinct local dates in YYYY-MM-DD format
  */
-export const getChatActiveDates_ = async (
-    region: DataRegion,
-    userId: string,
-    currentTime: string,
-): Promise<string[]> => {
-    const shanghaiDate = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(new Date(currentTime))
-    const monthStart = `${shanghaiDate.slice(0, 7)}-01`
-    const startUtc = new Date(`${monthStart}T00:00:00+08:00`).toISOString()
-    const end = new Date(`${monthStart}T00:00:00+08:00`)
-    end.setMonth(end.getMonth() + 1)
-    const endUtc = end.toISOString()
+export const getChatActiveDates_ = async (params: {
+    region: DataRegion
+    userId: string
+    createdAt: [string, string]
+}): Promise<string[]> => {
+    const { region, userId, createdAt } = params
 
     try {
-        return await queryChatActiveDates(region, userId, startUtc, endUtc)
+        return await queryChatActiveDates(region, userId, createdAt)
     } catch (error) {
         console.error('get chat active dates failed: ', error)
         throw error
@@ -364,24 +354,19 @@ export const getChatActiveDates_ = async (
  * Get chat histories handler.
  * @param userId user id
  * @param soulId soul id
- * @param date local date in YYYY-MM-DD format
- * @returns chat history list for the day
+ * @param createdAt UTC createdAt range filter
+ * @returns chat history list in createdAt range
  */
-export const getChatHistories_ = async (
-    region: DataRegion,
-    userId: string,
-    soulId: string,
-    date: string,
-): Promise<ChatHistory[]> => {
-    const startUtc = new Date(`${date}T00:00:00+08:00`).toISOString()
-
-    const end = new Date(`${date}T00:00:00+08:00`)
-    end.setDate(end.getDate() + 1)
-
-    const endUtc = end.toISOString()
+export const getChatHistories_ = async (params: {
+    region: DataRegion
+    userId: string
+    soulId: string
+    createdAt: [string, string]
+}): Promise<ChatHistory[]> => {
+    const { region, userId, soulId, createdAt } = params
 
     try {
-        return await queryChatHistories(region, userId, soulId, startUtc, endUtc)
+        return await queryChatHistories(region, userId, soulId, createdAt)
     } catch (error) {
         console.error('get chat histories failed:', error)
         throw error
