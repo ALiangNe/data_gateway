@@ -8,7 +8,7 @@ import type { DataListResult, DataRegion, OrderBy, Sort, User, UserBehaviorLogAg
 /**
  * Get users handler.
  * @param params - Query params.
- * @returns - { list: User[], total: number }.
+ * @returns - { items: User[], total: number }.
  */
 export const getUsers_ = async (params: {
     region: DataRegion
@@ -26,7 +26,7 @@ export const getUsers_ = async (params: {
     const { region, page, pageSize, sortBy, order, username, email, status, role, createdAt, updatedAt } = params
 
     try {
-        const { list, total } = await queryUsers(
+        const { items, total } = await queryUsers(
             region,
             page,
             pageSize,
@@ -40,7 +40,7 @@ export const getUsers_ = async (params: {
             updatedAt,
         )
         return {
-            list: list.map((row) => ({
+            items: items.map((row) => ({
                 ...row,
                 password: row.password ? 'true' : 'false',
             })),
@@ -89,7 +89,7 @@ export const getUserBehaviorLogs_ = async (params: {
 
     const ipSet = new Set<string>()
 
-    for (const row of result.list) {
+    for (const row of result.items) {
         for (const item of row.clientIps) {
             ipSet.add(item.value)
         }
@@ -122,9 +122,9 @@ export const getUserBehaviorLogs_ = async (params: {
         locationCache.set(ip, label)
     }
 
-    const list: UserBehaviorLogAggregate[] = []
+    const items: UserBehaviorLogAggregate[] = []
 
-    for (const row of result.list) {
+    for (const row of result.items) {
         const clientIps = []
 
         for (const item of row.clientIps) {
@@ -133,14 +133,14 @@ export const getUserBehaviorLogs_ = async (params: {
             })
         }
 
-        list.push({
+        items.push({
             ...row,
             clientIps,
         })
     }
 
     return {
-        list,
+        items,
         total: result.total,
     }
 }

@@ -4,7 +4,7 @@ import type { Bot, DataListResult, DataRegion, OrderBy, Sort } from '../../../ty
 /**
  * Get bots handler.
  * @param params - Query params.
- * @returns - { list: Bot[], total: number }.
+ * @returns - { items: Bot[], total: number }.
  */
 export const getBots_ = async (params: {
     region: DataRegion

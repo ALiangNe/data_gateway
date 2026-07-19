@@ -46,7 +46,7 @@ export const listSoftware_ = async (params: {
     }
 
     return {
-        list: res.data.data.items,
+        items: res.data.data.items,
         total: res.data.data.total,
     }
 }

@@ -79,7 +79,7 @@ export const queryKnowledge = async (
     }
 
     return {
-        list: res.rows.map((row) => toKnowledge(row)),
+        items: res.rows.map((row) => toKnowledge(row)),
         total: countRes.rows[0]?.total as number,
     }
 }

@@ -252,7 +252,7 @@ export type AggregateConfig = {
 
 // Data list result
 export type DataListResult<T> = {
-    list: T[]
+    items: T[]
     total: number
 }
 

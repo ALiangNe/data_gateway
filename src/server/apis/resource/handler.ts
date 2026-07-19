@@ -5,7 +5,7 @@ import type { DataListResult, DataRegion, Knowledge, McpCapability, OrderBy, Sor
 /**
  * Get knowledge handler.
  * @param params - Query params.
- * @returns - { list: Knowledge[], total: number }.
+ * @returns - { items: Knowledge[], total: number }.
  */
 export const getKnowledge_ = async (params: {
     region: DataRegion
@@ -35,7 +35,7 @@ export const getKnowledge_ = async (params: {
 /**
  * Get MCP capabilities handler.
  * @param params - Query params.
- * @returns - { list: McpCapability[], total: number }.
+ * @returns - { items: McpCapability[], total: number }.
  */
 export const getMcpCapabilities_ = async (params: {
     region: DataRegion

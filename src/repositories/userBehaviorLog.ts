@@ -261,7 +261,7 @@ export const queryUserBehaviorLogs = async (
     }
 
     return {
-        list: listRes.rows.map(mapper),
+        items: listRes.rows.map(mapper),
         total: countRes.rows[0]?.total ?? 0,
     }
 }

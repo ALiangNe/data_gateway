@@ -79,7 +79,7 @@ export const queryMcpCapabilities = async (
     }
 
     return {
-        list: res.rows.map((row) => toMcpCapability(row)),
+        items: res.rows.map((row) => toMcpCapability(row)),
         total: countRes.rows[0]?.total as number,
     }
 }

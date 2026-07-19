@@ -131,7 +131,7 @@ export const queryUsers = async (
     }
 
     return {
-        list: res.rows.map((row) => toUser(row)),
+        items: res.rows.map((row) => toUser(row)),
         total: countRes.rows[0]?.total as number,
     }
 }

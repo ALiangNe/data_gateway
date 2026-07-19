@@ -103,7 +103,7 @@ export const queryBots = async (
     }
 
     return {
-        list: res.rows.map((row) => toBot(row)),
+        items: res.rows.map((row) => toBot(row)),
         total: countRes.rows[0]?.total as number,
     }
 }
