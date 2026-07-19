@@ -9,8 +9,13 @@ import { ipCheck, logRequest, tokenCheck } from './midwares/auth'
 import { errorHandler } from './midwares/error'
 import { rateLimiteCheck } from './midwares/security'
 import healthRoute from './apis/health'
-import dataRoute from './apis/data'
+import chatRoute from './apis/chat'
+import commonRoute from './apis/common'
+import hardwareRoute from './apis/hardware'
+import logRoute from './apis/log'
+import resourceRoute from './apis/resource'
 import softwareRoute from './apis/software'
+import userRoute from './apis/user'
 import { CORS_ORIGINS, NODE_ENV } from '../config'
 // Expose listener instance to higher level scripts
 const listener = express()
@@ -30,8 +35,13 @@ listener.use(ipCheck)
 
 // load APIs (routes to business logc)
 listener.use('/', healthRoute)
-listener.use('/data', rateLimiteCheck, tokenCheck, dataRoute)
+listener.use('/chat', rateLimiteCheck, tokenCheck, chatRoute)
+listener.use('/common', rateLimiteCheck, tokenCheck, commonRoute)
+listener.use('/hardware', rateLimiteCheck, tokenCheck, hardwareRoute)
+listener.use('/log', rateLimiteCheck, tokenCheck, logRoute)
+listener.use('/resource', rateLimiteCheck, tokenCheck, resourceRoute)
 listener.use('/software', rateLimiteCheck, tokenCheck, softwareRoute)
+listener.use('/user', rateLimiteCheck, tokenCheck, userRoute)
 listener.use(errorHandler)
 
 export const startHTTPServer = (HTTP_PORT: number): Server => {
